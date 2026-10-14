@@ -85,7 +85,7 @@ describe("provisionUser", () => {
       .where(eq(user.id, result.data.userId));
     const wrong = await loginWithPassword({
       username: "NuevaVol",
-      password: "clave-incorrecta-12",
+      password: "mala",
       headers: new Headers(),
     });
     const right = await loginWithPassword({
