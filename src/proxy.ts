@@ -12,6 +12,8 @@ const PUBLIC_PREFIXES = [
   "/api/health",
 ];
 
+const ABSOLUTE_SESSION_MS = 30 * 24 * 60 * 60 * 1000;
+
 function isPublic(pathname: string) {
   return (
     pathname === "/" ||
@@ -19,6 +21,26 @@ function isPublic(pathname: string) {
       (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
     )
   );
+}
+
+function pastAbsoluteCap(session: {
+  absoluteExpiresAt?: Date | string | null;
+  createdAt?: Date | string | null;
+}) {
+  if (session.absoluteExpiresAt) {
+    return new Date(session.absoluteExpiresAt).getTime() < Date.now();
+  }
+  if (!session.createdAt) return false;
+  return (
+    new Date(session.createdAt).getTime() + ABSOLUTE_SESSION_MS < Date.now()
+  );
+}
+
+function withClearedSession(response: NextResponse, signedOut: Response) {
+  for (const cookie of signedOut.headers.getSetCookie()) {
+    response.headers.append("set-cookie", cookie);
+  }
+  return response;
 }
 
 export async function proxy(request: NextRequest) {
@@ -29,7 +51,31 @@ export async function proxy(request: NextRequest) {
   await ensureMigrated();
   const auth = getAuth();
   const session = await auth.api.getSession({ headers: request.headers });
-  const actor = session ? await buildActor(session.user.id) : null;
+  let actor = session ? await buildActor(session.user.id) : null;
+  const sessionRecord = session?.session as
+    | {
+        absoluteExpiresAt?: Date | string | null;
+        createdAt?: Date | string | null;
+      }
+    | undefined;
+  const sessionRejected =
+    session != null &&
+    (!actor || actor.banned || pastAbsoluteCap(sessionRecord ?? {}));
+
+  if (sessionRejected) {
+    const signedOut = await auth.api.signOut({
+      headers: request.headers,
+      asResponse: true,
+    });
+    actor = null;
+    if (!isPublic(pathname) && pathname !== "/privacidad") {
+      return withClearedSession(
+        NextResponse.redirect(new URL("/login", request.url)),
+        signedOut,
+      );
+    }
+    return withClearedSession(NextResponse.next(), signedOut);
+  }
 
   if (!actor && !isPublic(pathname) && pathname !== "/privacidad") {
     return NextResponse.redirect(new URL("/login", request.url));

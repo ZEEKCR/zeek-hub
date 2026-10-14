@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import type { Role } from "@/server/domain/types";
+import type { Actor, Role, Team } from "@/server/domain/types";
 import { ensureMigrated, getDb } from "@/server/db/client";
 import { account, loginAttempts, user } from "@/server/db/schema";
 import { writeAudit } from "@/server/audit/log";
@@ -25,7 +25,6 @@ import {
   validatePassword,
 } from "@/server/auth/password-policy";
 import { authorize } from "@/server/auth/policy";
-import type { Actor } from "@/server/domain/types";
 import { err, ok, type Result } from "@/server/domain/result";
 import { LIMITS, consumeLimit } from "@/server/ratelimit/limiter";
 import { repositories } from "@/server/container";
@@ -201,6 +200,19 @@ export async function loginWithPassword(input: {
     return err("unauthorized", GENERIC_LOGIN_ERROR);
   }
 
+  if (row.banned) {
+    await verifyPassword(await getDecoyHash(), input.password);
+    await writeAudit({
+      actorType: "user",
+      actorId: row.id,
+      action: "auth.login_failure",
+      entity: "user",
+      entityId: row.id,
+      ...(input.ip ? { ip: input.ip } : {}),
+    });
+    return err("forbidden", "La cuenta está inactiva.");
+  }
+
   const passwordHash =
     (await passwordHashFor(row.id)) ?? (await getDecoyHash());
   const matches = await verifyPassword(passwordHash, input.password);
@@ -217,7 +229,6 @@ export async function loginWithPassword(input: {
     return err("unauthorized", GENERIC_LOGIN_ERROR);
   }
 
-  if (row.banned) return err("forbidden", "La cuenta está inactiva.");
   if (
     row.mustChangePassword &&
     row.tempPasswordExpiresAt &&
@@ -279,88 +290,100 @@ export async function provisionUser(
   const policy = validatePassword(tempPassword, username);
   if (policy) return err("validation", passwordRejectionMessage(policy));
 
+  const repos = repositories();
+  const teamIds = [input.primaryTeamId, ...(input.secondaryTeamIds ?? [])];
+  const uniqueTeamIds = [...new Set(teamIds)];
+  const teams: Team[] = [];
+  for (const teamId of uniqueTeamIds) {
+    const team = await repos.teams.get(teamId);
+    if (!team) return err("validation", "El equipo no existe.");
+    teams.push(team);
+  }
+
   const auth = await readyAuth();
   const ctx = await auth.$context;
   const passwordHash = await ctx.password.hash(tempPassword);
   const email = input.email?.trim()
     ? input.email.trim().toLowerCase()
     : placeholderEmail(username);
-  const created = await ctx.internalAdapter.createUser(
-    {
-      email,
-      name: input.name,
-      username,
-      displayUsername: input.username,
-      emailVerified: false,
-    },
-    { method: "server" },
-  );
-  if (!created) return err("upstream", "No se pudo crear el usuario.");
-  await ctx.internalAdapter.linkAccount({
-    userId: created.id,
-    providerId: "credential",
-    accountId: created.id,
-    password: passwordHash,
-  });
-
-  const repos = repositories();
-  const team = await repos.teams.get(input.primaryTeamId);
-  if (!team) return err("validation", "El equipo no existe.");
+  const userId = crypto.randomUUID();
+  const volunteerId = crypto.randomUUID();
+  const now = new Date();
+  const expires = new Date(now.getTime() + TEMP_PASSWORD_MS);
   const contact = publicEmail(email);
-  const volunteer = await repos.volunteers.upsert({
-    id: crypto.randomUUID(),
-    name: input.name,
-    ...(contact ? { email: contact } : {}),
-    username,
-    userId: created.id,
-    role: input.role,
-    status: "active",
-    teamIds: [input.primaryTeamId, ...(input.secondaryTeamIds ?? [])],
-    primaryTeamId: input.primaryTeamId,
-    ...(input.phone ? { phone: input.phone } : {}),
-    updatedAt: new Date().toISOString(),
-  });
-  if (input.makeHead || input.role === "head" || input.role === "admin") {
-    await repos.teams.upsert({
-      ...team,
-      headIds: Array.from(new Set([...team.headIds, volunteer.id])),
-      memberIds: Array.from(new Set([...team.memberIds, volunteer.id])),
-    });
-  } else {
-    await repos.teams.upsert({
-      ...team,
-      memberIds: Array.from(new Set([...team.memberIds, volunteer.id])),
-    });
-  }
+  const lead =
+    input.makeHead === true || input.role === "head" || input.role === "admin";
 
-  const expires = new Date(Date.now() + TEMP_PASSWORD_MS);
-  await getDb()
-    .update(user)
-    .set({
-      role: input.role,
-      mustChangePassword: true,
-      tempPasswordExpiresAt: expires,
-      notionVolunteerId: volunteer.id,
-      createdBy: input.createdBy,
-      updatedAt: new Date(),
-    })
-    .where(eq(user.id, created.id));
+  try {
+    await getDb().transaction(async (tx) => {
+      await tx.insert(user).values({
+        id: userId,
+        name: input.name,
+        email,
+        emailVerified: false,
+        username,
+        displayUsername: input.username,
+        role: input.role,
+        banned: false,
+        mustChangePassword: true,
+        tempPasswordExpiresAt: expires,
+        notionVolunteerId: volunteerId,
+        createdBy: input.createdBy,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await tx.insert(account).values({
+        id: crypto.randomUUID(),
+        accountId: userId,
+        providerId: "credential",
+        userId,
+        password: passwordHash,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const volunteer = await repos.volunteers.upsert({
+        id: volunteerId,
+        name: input.name,
+        ...(contact ? { email: contact } : {}),
+        username,
+        userId,
+        role: input.role,
+        status: "active",
+        teamIds: uniqueTeamIds,
+        primaryTeamId: input.primaryTeamId,
+        ...(input.phone ? { phone: input.phone } : {}),
+        updatedAt: now.toISOString(),
+      });
+      for (const team of teams) {
+        await repos.teams.upsert({
+          ...team,
+          headIds:
+            lead && team.id === input.primaryTeamId
+              ? Array.from(new Set([...team.headIds, volunteer.id]))
+              : team.headIds,
+          memberIds: Array.from(new Set([...team.memberIds, volunteer.id])),
+        });
+      }
+    });
+  } catch {
+    return err("upstream", "No se pudo crear el usuario.");
+  }
 
   await writeAudit({
     actorType: input.createdBy ? "user" : "system",
     ...(input.createdBy ? { actorId: input.createdBy } : {}),
     action: "user.create",
     entity: "user",
-    entityId: created.id,
+    entityId: userId,
     after: {
       username,
       role: input.role,
       teamId: input.primaryTeamId,
-      volunteerId: volunteer.id,
+      volunteerId,
     },
   });
 
-  return ok({ userId: created.id, tempPassword, volunteerId: volunteer.id });
+  return ok({ userId, tempPassword, volunteerId });
 }
 
 export async function createUserAs(

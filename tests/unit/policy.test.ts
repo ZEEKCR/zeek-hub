@@ -91,6 +91,20 @@ describe("authorization matrix", () => {
         teamIds: ["team-growth"],
       }),
     ).toBe(false);
+    expect(
+      authorize(head, "users.deactivate", {
+        kind: "user",
+        role: "volunteer",
+        teamIds: [],
+      }),
+    ).toBe(false);
+    expect(
+      authorize(actor("admin"), "users.deactivate", {
+        kind: "user",
+        role: "volunteer",
+        teamIds: [],
+      }),
+    ).toBe(true);
   });
 
   it("covers every action for the three roles", () => {

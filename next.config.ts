@@ -11,6 +11,11 @@ if (process.env.BETTER_AUTH_URL) {
 
 const nextConfig: NextConfig = {
   cacheComponents: false,
+  serverExternalPackages: ["@electric-sql/pglite"],
+  outputFileTracingIncludes: {
+    "/*": ["./drizzle/**/*"],
+    "/**/*": ["./drizzle/**/*"],
+  },
   turbopack: {
     resolveAlias: {
       "next-intl/config": "./src/i18n/request.ts",

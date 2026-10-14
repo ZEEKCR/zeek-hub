@@ -37,13 +37,17 @@ CONFIRM=yes pnpm notion:setup -- --apply
 
 ## Seed de admins
 
-El seed se corre a mano, una sola vez, fuera de CI. Imprime cada contraseña temporal una sola vez en esa consola.
+El seed se corre a mano, fuera de CI, y solo si `SEED_USERS` está definido. Imprime cada contraseña temporal una sola vez en esa consola. `pnpm db:migrate`, `pnpm notion:setup` y `pnpm seed:admins` leen `.env` solos.
 
 ```bash
 pnpm seed:admins
 ```
 
-`SEED_USERS` puede reemplazar la lista por un JSON `[{ "username", "email", "team" }]`. No incluye contraseñas.
+`SEED_USERS` es un JSON `[{ "username", "email", "team" }]`. `team` es el nombre del equipo (Growth, Operations, Communications, Technical o Logistics). Si la variable falta o no es un arreglo, el script termina con un error y no crea usuarios. No incluye contraseñas.
+
+## Sincronización
+
+Vercel llama `GET /api/cron/sync` una vez al día. GitHub Actions lo llama cada 15 minutos con el secreto `CRON_SECRET` y la URL del despliegue en `APP_URL`.
 
 ## Pruebas
 

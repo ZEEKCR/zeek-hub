@@ -21,11 +21,25 @@ export function publicEmail(email: string | null | undefined) {
   return isPlaceholderEmail(email) ? undefined : email;
 }
 
+const ALPHABET_LIMIT = 256 - (256 % ALPHABET.length);
+
+export function unbiasedAlphabetIndex(byte: number) {
+  if (byte >= ALPHABET_LIMIT) return null;
+  return byte % ALPHABET.length;
+}
+
 export function generateTempPassword() {
-  const bytes = randomBytes(16);
   let password = "";
-  for (const byte of bytes) {
-    password += ALPHABET[byte % ALPHABET.length] ?? "a";
+  while (password.length < 16) {
+    const bytes = randomBytes(16);
+    for (const byte of bytes) {
+      const index = unbiasedAlphabetIndex(byte);
+      if (index === null) continue;
+      const character = ALPHABET[index];
+      if (character === undefined) continue;
+      password += character;
+      if (password.length === 16) break;
+    }
   }
   return password;
 }

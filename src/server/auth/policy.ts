@@ -41,6 +41,7 @@ function managesVolunteer(
   return (
     actor.role === "head" &&
     target.role === "volunteer" &&
+    target.teamIds.length > 0 &&
     isSubset(target.teamIds, actor.headOfTeamIds)
   );
 }

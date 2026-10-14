@@ -22,16 +22,28 @@ function memoryLimit(key: string, rule: Window) {
 
 const upstash = new Map<string, Ratelimit>();
 
+/** Placeholder values exist so `next build` can satisfy the production env check. */
+export function upstashRestConfigured(url?: string, token?: string) {
+  if (!url || !token) return false;
+  try {
+    return new URL(url).hostname !== "example.upstash.io";
+  } catch {
+    return false;
+  }
+}
+
 function upstashLimiter(rule: Window) {
   const env = getEnv();
-  if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) return null;
+  const url = env.UPSTASH_REDIS_REST_URL;
+  const token = env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token || !upstashRestConfigured(url, token)) return null;
   const cacheKey = `${rule.max}:${rule.windowMs}`;
   const existing = upstash.get(cacheKey);
   if (existing) return existing;
   const limiter = new Ratelimit({
     redis: new Redis({
-      url: env.UPSTASH_REDIS_REST_URL,
-      token: env.UPSTASH_REDIS_REST_TOKEN,
+      url,
+      token,
     }),
     limiter: Ratelimit.slidingWindow(rule.max, `${rule.windowMs} ms`),
     prefix: "zeek",
@@ -41,10 +53,14 @@ function upstashLimiter(rule: Window) {
 }
 
 export async function consumeLimit(key: string, rule: Window) {
-  const limiter = upstashLimiter(rule);
-  if (!limiter) return memoryLimit(key, rule);
-  const result = await limiter.limit(key);
-  return result.success;
+  try {
+    const limiter = upstashLimiter(rule);
+    if (!limiter) return memoryLimit(key, rule);
+    const result = await limiter.limit(key);
+    return result.success;
+  } catch {
+    return memoryLimit(key, rule);
+  }
 }
 
 export const LIMITS = {
