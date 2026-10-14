@@ -1,0 +1,53 @@
+{
+  "brand": "ZEEK",
+  "login": {
+    "title": "Entrar",
+    "username": "Usuario",
+    "password": "Contraseña",
+    "submit": "Entrar",
+    "hint": "El acceso lo crea un líder de equipo o un administrador."
+  },
+  "password": {
+    "title": "Cambiar contraseña",
+    "current": "Contraseña actual",
+    "next": "Contraseña nueva",
+    "confirm": "Confirmar contraseña",
+    "submit": "Guardar contraseña",
+    "mismatch": "Las contraseñas no coinciden.",
+    "guide": "Mínimo 12 caracteres. Se puede usar espacios."
+  },
+  "privacy": {
+    "title": "Aviso de privacidad",
+    "body": "ZEEK Hub guarda nombre, usuario, correo opcional, teléfono opcional, foto opcional, rol y equipo para coordinar el voluntariado. Teléfono y correo de otras personas solo los ve el propio equipo y los administradores. Los datos se procesan en Notion, Neon, Vercel, Upstash y Sentry, fuera de Costa Rica. El correo de contacto para acceso, rectificación o supresión está pendiente de definir.",
+    "accept": "Aceptar y continuar"
+  },
+  "nav": {
+    "home": "Inicio",
+    "tasks": "Tareas",
+    "calendar": "Calendario",
+    "events": "Eventos",
+    "more": "Más",
+    "teams": "Equipos",
+    "resources": "Recursos",
+    "profile": "Perfil",
+    "admin": "Admin"
+  },
+  "home": {
+    "hello": "Hola, {name}",
+    "openTasks": "Mis tareas abiertas",
+    "dueWeek": "Vencen esta semana",
+    "upcoming": "Próximos eventos",
+    "doneMonth": "Tareas Done este mes",
+    "nextEvent": "Próximo evento",
+    "today": "Mis tareas de hoy",
+    "notices": "Avisos",
+    "emptyNotice": "No hay avisos nuevos."
+  },
+  "common": {
+    "save": "Guardar cambios",
+    "retry": "No se pudo guardar. Intentar de nuevo",
+    "soon": "Disponible en una fase siguiente.",
+    "copy": "Copiar",
+    "copied": "Copiado"
+  }
+}

@@ -1,0 +1,615 @@
+import { and, eq } from "drizzle-orm";
+import type { Role } from "@/server/domain/types";
+import { ensureMigrated, getDb } from "@/server/db/client";
+import { account, loginAttempts, user } from "@/server/db/schema";
+import { writeAudit } from "@/server/audit/log";
+import { readyAuth } from "@/server/auth/config";
+import {
+  GENERIC_LOGIN_ERROR,
+  generateTempPassword,
+  isPlaceholderEmail,
+  normalizeUsername,
+  placeholderEmail,
+  publicEmail,
+  USERNAME_PATTERN,
+} from "@/server/auth/credentials";
+import { isPasswordPwned } from "@/server/auth/hibp";
+import {
+  isLocked,
+  isManualLock,
+  lockoutAfterFailure,
+} from "@/server/auth/lockout";
+import { getDecoyHash, verifyPassword } from "@/server/auth/password";
+import {
+  passwordRejectionMessage,
+  validatePassword,
+} from "@/server/auth/password-policy";
+import { authorize } from "@/server/auth/policy";
+import type { Actor } from "@/server/domain/types";
+import { err, ok, type Result } from "@/server/domain/result";
+import { LIMITS, consumeLimit } from "@/server/ratelimit/limiter";
+import { repositories } from "@/server/container";
+import { getEnv } from "@/env";
+
+const TEMP_PASSWORD_MS = 72 * 60 * 60 * 1000;
+
+function asRole(value: string | null | undefined): Role {
+  if (value === "head" || value === "admin" || value === "volunteer")
+    return value;
+  return "volunteer";
+}
+
+async function passwordHashFor(userId: string) {
+  await ensureMigrated();
+  const rows = await getDb()
+    .select()
+    .from(account)
+    .where(
+      and(eq(account.userId, userId), eq(account.providerId, "credential")),
+    )
+    .limit(1);
+  return rows[0]?.password ?? null;
+}
+
+async function findUser(username: string) {
+  await ensureMigrated();
+  const rows = await getDb()
+    .select()
+    .from(user)
+    .where(eq(user.username, username))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function buildActor(userId: string): Promise<Actor | null> {
+  await ensureMigrated();
+  const rows = await getDb()
+    .select()
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+  const row = rows[0];
+  if (!row || !row.username) return null;
+  const repos = repositories();
+  const volunteer = row.notionVolunteerId
+    ? await repos.volunteers.get(row.notionVolunteerId)
+    : await repos.volunteers.findByUserId(row.id);
+  const teams = await repos.teams.list();
+  const volunteerId = volunteer?.id ?? null;
+  const headOfTeamIds =
+    asRole(row.role) === "volunteer" || !volunteerId
+      ? []
+      : teams
+          .filter((team) => team.headIds.includes(volunteerId))
+          .map((team) => team.id);
+  return {
+    userId: row.id,
+    volunteerId,
+    username: row.username,
+    displayName: row.displayUsername || row.name,
+    role: asRole(row.role),
+    teamIds: volunteer?.teamIds ?? [],
+    headOfTeamIds,
+    banned: row.banned,
+    mustChangePassword: row.mustChangePassword,
+    privacyAcceptedAt: row.privacyAcceptedAt?.toISOString() ?? null,
+    tempPasswordExpiresAt: row.tempPasswordExpiresAt?.toISOString() ?? null,
+  };
+}
+
+async function recordFailure(username: string, ip?: string) {
+  await ensureMigrated();
+  const db = getDb();
+  const current = await db
+    .select()
+    .from(loginAttempts)
+    .where(eq(loginAttempts.userKey, username))
+    .limit(1);
+  const previous = current[0];
+  const now = new Date();
+  if (previous?.lockedUntil && isLocked(previous.lockedUntil, now))
+    return previous;
+  const next = lockoutAfterFailure(previous?.failures ?? 0, now);
+  await db
+    .insert(loginAttempts)
+    .values({
+      userKey: username,
+      failures: next.failures,
+      lockedUntil: next.lockedUntil,
+      lastFailureAt: now,
+    })
+    .onConflictDoUpdate({
+      target: loginAttempts.userKey,
+      set: {
+        failures: next.failures,
+        lockedUntil: next.lockedUntil,
+        lastFailureAt: now,
+      },
+    });
+  if (next.lockedUntil) {
+    await writeAudit({
+      actorType: "system",
+      action: "auth.lockout",
+      entity: "user",
+      entityId: username,
+      after: {
+        failures: next.failures,
+        manual: isManualLock(next.lockedUntil),
+      },
+      ...(ip ? { ip } : {}),
+    });
+  }
+  return { ...next, lastFailureAt: now };
+}
+
+async function clearFailures(username: string) {
+  await getDb()
+    .insert(loginAttempts)
+    .values({
+      userKey: username,
+      failures: 0,
+      lockedUntil: null,
+      lastFailureAt: null,
+    })
+    .onConflictDoUpdate({
+      target: loginAttempts.userKey,
+      set: { failures: 0, lockedUntil: null, lastFailureAt: null },
+    });
+}
+
+export async function loginWithPassword(input: {
+  username: string;
+  password: string;
+  ip?: string;
+  headers: Headers;
+}): Promise<Result<{ mustChangePassword: boolean; needsConsent: boolean }>> {
+  const username = normalizeUsername(input.username);
+  const ipKey = input.ip ?? "unknown";
+  const userAllowed = await consumeLimit(
+    `login:${ipKey}:${username}`,
+    LIMITS.loginUser,
+  );
+  const ipAllowed = await consumeLimit(`login-ip:${ipKey}`, LIMITS.loginIp);
+  if (!userAllowed || !ipAllowed) {
+    return err("rate_limited", "Demasiados intentos. Esperar un momento.");
+  }
+
+  const row = USERNAME_PATTERN.test(input.username)
+    ? await findUser(username)
+    : null;
+  const attempt = row
+    ? await getDb()
+        .select()
+        .from(loginAttempts)
+        .where(eq(loginAttempts.userKey, username))
+        .limit(1)
+    : [];
+  const locked = attempt[0]?.lockedUntil
+    ? isLocked(attempt[0].lockedUntil, new Date())
+    : false;
+
+  if (!row) {
+    await verifyPassword(await getDecoyHash(), input.password);
+    await recordFailure(username, input.ip);
+    await writeAudit({
+      actorType: "system",
+      action: "auth.login_failure",
+      entity: "user",
+      entityId: username,
+      ...(input.ip ? { ip: input.ip } : {}),
+    });
+    return err("unauthorized", GENERIC_LOGIN_ERROR);
+  }
+
+  const passwordHash =
+    (await passwordHashFor(row.id)) ?? (await getDecoyHash());
+  const matches = await verifyPassword(passwordHash, input.password);
+  if (!matches || locked) {
+    if (!locked) await recordFailure(username, input.ip);
+    await writeAudit({
+      actorType: "user",
+      actorId: row.id,
+      action: "auth.login_failure",
+      entity: "user",
+      entityId: row.id,
+      ...(input.ip ? { ip: input.ip } : {}),
+    });
+    return err("unauthorized", GENERIC_LOGIN_ERROR);
+  }
+
+  if (row.banned) return err("forbidden", "La cuenta está inactiva.");
+  if (
+    row.mustChangePassword &&
+    row.tempPasswordExpiresAt &&
+    row.tempPasswordExpiresAt.getTime() < Date.now()
+  ) {
+    return err(
+      "validation",
+      "La contraseña temporal venció. Pedir un reseteo.",
+    );
+  }
+
+  const auth = await readyAuth();
+  await auth.api.signInUsername({
+    body: { username, password: input.password },
+    headers: input.headers,
+  });
+  await clearFailures(username);
+  await writeAudit({
+    actorType: "user",
+    actorId: row.id,
+    action: "auth.login_success",
+    entity: "user",
+    entityId: row.id,
+    ...(input.ip ? { ip: input.ip } : {}),
+  });
+  return ok({
+    mustChangePassword: row.mustChangePassword,
+    needsConsent: row.privacyAcceptedAt === null,
+  });
+}
+
+export type ProvisionInput = {
+  username: string;
+  name: string;
+  role: Role;
+  primaryTeamId: string;
+  secondaryTeamIds?: string[];
+  email?: string;
+  phone?: string;
+  createdBy: string | null;
+  makeHead?: boolean;
+};
+
+export async function provisionUser(
+  input: ProvisionInput,
+): Promise<
+  Result<{ userId: string; tempPassword: string; volunteerId: string }>
+> {
+  if (!USERNAME_PATTERN.test(input.username)) {
+    return err(
+      "validation",
+      "El usuario debe tener entre 3 y 32 caracteres (letras, números, punto, guion).",
+    );
+  }
+  const username = normalizeUsername(input.username);
+  if (await findUser(username))
+    return err("conflict", "Ese usuario ya existe.");
+  const tempPassword = generateTempPassword();
+  const policy = validatePassword(tempPassword, username);
+  if (policy) return err("validation", passwordRejectionMessage(policy));
+
+  const auth = await readyAuth();
+  const ctx = await auth.$context;
+  const passwordHash = await ctx.password.hash(tempPassword);
+  const email = input.email?.trim()
+    ? input.email.trim().toLowerCase()
+    : placeholderEmail(username);
+  const created = await ctx.internalAdapter.createUser(
+    {
+      email,
+      name: input.name,
+      username,
+      displayUsername: input.username,
+      emailVerified: false,
+    },
+    { method: "server" },
+  );
+  if (!created) return err("upstream", "No se pudo crear el usuario.");
+  await ctx.internalAdapter.linkAccount({
+    userId: created.id,
+    providerId: "credential",
+    accountId: created.id,
+    password: passwordHash,
+  });
+
+  const repos = repositories();
+  const team = await repos.teams.get(input.primaryTeamId);
+  if (!team) return err("validation", "El equipo no existe.");
+  const contact = publicEmail(email);
+  const volunteer = await repos.volunteers.upsert({
+    id: crypto.randomUUID(),
+    name: input.name,
+    ...(contact ? { email: contact } : {}),
+    username,
+    userId: created.id,
+    role: input.role,
+    status: "active",
+    teamIds: [input.primaryTeamId, ...(input.secondaryTeamIds ?? [])],
+    primaryTeamId: input.primaryTeamId,
+    ...(input.phone ? { phone: input.phone } : {}),
+    updatedAt: new Date().toISOString(),
+  });
+  if (input.makeHead || input.role === "head" || input.role === "admin") {
+    await repos.teams.upsert({
+      ...team,
+      headIds: Array.from(new Set([...team.headIds, volunteer.id])),
+      memberIds: Array.from(new Set([...team.memberIds, volunteer.id])),
+    });
+  } else {
+    await repos.teams.upsert({
+      ...team,
+      memberIds: Array.from(new Set([...team.memberIds, volunteer.id])),
+    });
+  }
+
+  const expires = new Date(Date.now() + TEMP_PASSWORD_MS);
+  await getDb()
+    .update(user)
+    .set({
+      role: input.role,
+      mustChangePassword: true,
+      tempPasswordExpiresAt: expires,
+      notionVolunteerId: volunteer.id,
+      createdBy: input.createdBy,
+      updatedAt: new Date(),
+    })
+    .where(eq(user.id, created.id));
+
+  await writeAudit({
+    actorType: input.createdBy ? "user" : "system",
+    ...(input.createdBy ? { actorId: input.createdBy } : {}),
+    action: "user.create",
+    entity: "user",
+    entityId: created.id,
+    after: {
+      username,
+      role: input.role,
+      teamId: input.primaryTeamId,
+      volunteerId: volunteer.id,
+    },
+  });
+
+  return ok({ userId: created.id, tempPassword, volunteerId: volunteer.id });
+}
+
+export async function createUserAs(
+  actor: Actor,
+  input: Omit<ProvisionInput, "createdBy" | "makeHead">,
+): Promise<Result<{ userId: string; tempPassword: string }>> {
+  const allowed = await consumeLimit(
+    `users:${actor.userId}`,
+    LIMITS.credentialChange,
+  );
+  if (!allowed)
+    return err("rate_limited", "Demasiados cambios. Esperar un momento.");
+  const teamIds = [input.primaryTeamId, ...(input.secondaryTeamIds ?? [])];
+  if (
+    !authorize(actor, "users.create", {
+      kind: "user",
+      role: input.role,
+      teamIds,
+    })
+  ) {
+    return err("forbidden", "No tiene permiso para crear este usuario.");
+  }
+  const created = await provisionUser({
+    ...input,
+    createdBy: actor.userId,
+    makeHead: input.role !== "volunteer",
+  });
+  if (!created.ok) return created;
+  return ok({
+    userId: created.data.userId,
+    tempPassword: created.data.tempPassword,
+  });
+}
+
+async function targetActor(userId: string) {
+  return buildActor(userId);
+}
+
+export async function resetUserPassword(
+  actor: Actor,
+  userId: string,
+): Promise<Result<{ tempPassword: string }>> {
+  const allowed = await consumeLimit(
+    `reset:${actor.userId}`,
+    LIMITS.credentialChange,
+  );
+  if (!allowed)
+    return err("rate_limited", "Demasiados cambios. Esperar un momento.");
+  const target = await targetActor(userId);
+  if (!target) return err("not_found", "Usuario no encontrado.");
+  if (
+    !authorize(actor, "users.resetPassword", {
+      kind: "user",
+      role: target.role,
+      teamIds: target.teamIds,
+    })
+  ) {
+    return err("forbidden", "No tiene permiso para resetear esta cuenta.");
+  }
+  const tempPassword = generateTempPassword();
+  const auth = await readyAuth();
+  const ctx = await auth.$context;
+  await ctx.internalAdapter.updatePassword(
+    userId,
+    await ctx.password.hash(tempPassword),
+  );
+  await ctx.internalAdapter.deleteUserSessions(userId);
+  await getDb()
+    .update(user)
+    .set({
+      mustChangePassword: true,
+      tempPasswordExpiresAt: new Date(Date.now() + TEMP_PASSWORD_MS),
+      updatedAt: new Date(),
+    })
+    .where(eq(user.id, userId));
+  await clearFailures(target.username);
+  await writeAudit({
+    actorType: "user",
+    actorId: actor.userId,
+    action: "user.password_reset",
+    entity: "user",
+    entityId: userId,
+  });
+  return ok({ tempPassword });
+}
+
+export async function unlockAccount(
+  actor: Actor,
+  userId: string,
+): Promise<Result<{ username: string }>> {
+  const target = await targetActor(userId);
+  if (!target) return err("not_found", "Usuario no encontrado.");
+  if (
+    !authorize(actor, "users.unlock", {
+      kind: "user",
+      role: target.role,
+      teamIds: target.teamIds,
+    })
+  ) {
+    return err("forbidden", "No tiene permiso para desbloquear esta cuenta.");
+  }
+  await clearFailures(target.username);
+  await writeAudit({
+    actorType: "user",
+    actorId: actor.userId,
+    action: "user.unlock",
+    entity: "user",
+    entityId: userId,
+  });
+  return ok({ username: target.username });
+}
+
+export async function deactivateAccount(
+  actor: Actor,
+  userId: string,
+): Promise<Result<{ username: string }>> {
+  const target = await targetActor(userId);
+  if (!target) return err("not_found", "Usuario no encontrado.");
+  if (
+    !authorize(actor, "users.deactivate", {
+      kind: "user",
+      role: target.role,
+      teamIds: target.teamIds,
+    })
+  ) {
+    return err("forbidden", "No tiene permiso para desactivar esta cuenta.");
+  }
+  const auth = await readyAuth();
+  const ctx = await auth.$context;
+  await ctx.internalAdapter.deleteUserSessions(userId);
+  await getDb()
+    .update(user)
+    .set({ banned: true, updatedAt: new Date() })
+    .where(eq(user.id, userId));
+  if (target.volunteerId) {
+    const repos = repositories();
+    const volunteer = await repos.volunteers.get(target.volunteerId);
+    if (volunteer)
+      await repos.volunteers.upsert({
+        ...volunteer,
+        status: "inactive",
+        updatedAt: new Date().toISOString(),
+      });
+  }
+  await writeAudit({
+    actorType: "user",
+    actorId: actor.userId,
+    action: "user.deactivate",
+    entity: "user",
+    entityId: userId,
+  });
+  return ok({ username: target.username });
+}
+
+export async function changeOwnPassword(input: {
+  actor: Actor;
+  currentPassword: string;
+  nextPassword: string;
+  headers: Headers;
+}): Promise<Result<{ changed: true }>> {
+  const allowed = await consumeLimit(
+    `password:${input.actor.userId}`,
+    LIMITS.credentialChange,
+  );
+  if (!allowed)
+    return err("rate_limited", "Demasiados cambios. Esperar un momento.");
+  const rejection = validatePassword(input.nextPassword, input.actor.username);
+  if (rejection) return err("validation", passwordRejectionMessage(rejection));
+  if (getEnv().hibpEnabled) {
+    const pwned = await isPasswordPwned(input.nextPassword);
+    if (pwned)
+      return err(
+        "validation",
+        "Esa contraseña apareció en una filtración. Elegir otra.",
+      );
+  }
+  const auth = await readyAuth();
+  await auth.api.changePassword({
+    body: {
+      currentPassword: input.currentPassword,
+      newPassword: input.nextPassword,
+      revokeOtherSessions: true,
+    },
+    headers: input.headers,
+  });
+  await getDb()
+    .update(user)
+    .set({
+      mustChangePassword: false,
+      tempPasswordExpiresAt: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(user.id, input.actor.userId));
+  await writeAudit({
+    actorType: "user",
+    actorId: input.actor.userId,
+    action: "user.password_change",
+    entity: "user",
+    entityId: input.actor.userId,
+  });
+  return ok({ changed: true });
+}
+
+export async function acceptPrivacy(
+  actor: Actor,
+): Promise<Result<{ acceptedAt: string }>> {
+  const acceptedAt = new Date();
+  await getDb()
+    .update(user)
+    .set({ privacyAcceptedAt: acceptedAt, updatedAt: acceptedAt })
+    .where(eq(user.id, actor.userId));
+  if (actor.volunteerId) {
+    const repos = repositories();
+    const volunteer = await repos.volunteers.get(actor.volunteerId);
+    if (volunteer) {
+      await repos.volunteers.upsert({
+        ...volunteer,
+        updatedAt: acceptedAt.toISOString(),
+      });
+    }
+  }
+  await writeAudit({
+    actorType: "user",
+    actorId: actor.userId,
+    action: "user.privacy_accept",
+    entity: "user",
+    entityId: actor.userId,
+  });
+  return ok({ acceptedAt: acceptedAt.toISOString() });
+}
+
+export async function listDirectory(actor: Actor) {
+  const repos = repositories();
+  const volunteers = await repos.volunteers.list();
+  const teams = await repos.teams.list();
+  const visible = volunteers.map((volunteer) => {
+    const canContact = authorize(actor, "volunteers.viewContact", {
+      kind: "volunteer",
+      teamIds: volunteer.teamIds,
+    });
+    return {
+      ...volunteer,
+      email: canContact ? volunteer.email : undefined,
+      phone: canContact ? volunteer.phone : undefined,
+    };
+  });
+  return { volunteers: visible, teams };
+}
+
+export function contactEmail(email: string | null | undefined) {
+  return isPlaceholderEmail(email) ? null : (email ?? null);
+}
