@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Urbanist } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/i18n/es.json";
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   description: "Coordinación de voluntarios de ZEEK",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es" className={`${urbanist.variable} dark h-full antialiased`}>
       <body className="min-h-full">
