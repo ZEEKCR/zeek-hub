@@ -1,13 +1,24 @@
-import { collectPaginatedAPI } from "@notionhq/client";
-import type { Team, Volunteer } from "@/server/domain/types";
+import { collectPaginatedAPI, isNotionClientError } from "@notionhq/client";
+import type { TaskStatus, Team, Volunteer } from "@/server/domain/types";
 import { createNotionClient } from "@/server/repositories/notion/client";
 import {
+  mapActivityPage,
+  mapResourcePage,
+  mapTaskPage,
   mapTeamPage,
   mapVolunteerPage,
+  notionStatusName,
   volunteerToProperties,
+  type NotionPerson,
 } from "@/server/repositories/notion/mappers";
-import { dataSourceId } from "@/server/repositories/notion/schema";
+import {
+  dataSourceId,
+  notionSchema,
+} from "@/server/repositories/notion/schema";
 import type {
+  ActivityRepository,
+  ResourceRepository,
+  TaskRepository,
   TeamRepository,
   VolunteerRepository,
 } from "@/server/repositories/interfaces";
@@ -17,6 +28,20 @@ type Page = {
   last_edited_time?: string;
   properties: Record<string, { type?: string }>;
 };
+
+function notionUnavailable(error: unknown) {
+  if (
+    error instanceof Error &&
+    error.message.startsWith("Missing NOTION_DS_")
+  ) {
+    return true;
+  }
+  return isMissingNotionSource(error);
+}
+
+export function isMissingNotionSource(error: unknown) {
+  return isNotionClientError(error) && error.code === "object_not_found";
+}
 
 async function queryAll(dataSourceIdValue: string) {
   const { client, call } = createNotionClient();
@@ -32,18 +57,28 @@ async function queryAll(dataSourceIdValue: string) {
 export function notionVolunteers(): VolunteerRepository {
   return {
     async list() {
-      const pages = await queryAll(dataSourceId("volunteers"));
-      return pages.flatMap((page) => {
-        const mapped = mapVolunteerPage(page);
-        return mapped ? [mapped] : [];
-      });
+      try {
+        const pages = await queryAll(dataSourceId("volunteers"));
+        return pages.flatMap((page) => {
+          const mapped = mapVolunteerPage(page);
+          return mapped ? [mapped] : [];
+        });
+      } catch (error) {
+        if (notionUnavailable(error)) return [];
+        throw error;
+      }
     },
     async get(id) {
       const { client, call } = createNotionClient();
-      const page = (await call(() =>
-        client.pages.retrieve({ page_id: id }),
-      )) as Page;
-      return mapVolunteerPage(page);
+      try {
+        const page = (await call(() =>
+          client.pages.retrieve({ page_id: id }),
+        )) as Page;
+        return mapVolunteerPage(page);
+      } catch (error) {
+        if (notionUnavailable(error)) return null;
+        throw error;
+      }
     },
     async findByUserId(userId) {
       const all = await this.list();
@@ -87,11 +122,16 @@ export function notionVolunteers(): VolunteerRepository {
 export function notionTeams(): TeamRepository {
   return {
     async list() {
-      const pages = await queryAll(dataSourceId("teams"));
-      return pages.flatMap((page) => {
-        const mapped = mapTeamPage(page);
-        return mapped ? [mapped] : [];
-      });
+      try {
+        const pages = await queryAll(dataSourceId("teams"));
+        return pages.flatMap((page) => {
+          const mapped = mapTeamPage(page);
+          return mapped ? [mapped] : [];
+        });
+      } catch (error) {
+        if (notionUnavailable(error)) return [];
+        throw error;
+      }
     },
     async get(id) {
       const all = await this.list();
@@ -101,4 +141,86 @@ export function notionTeams(): TeamRepository {
       return team;
     },
   };
+}
+
+export async function readTasks() {
+  const pages = await queryAll(dataSourceId("tasks"));
+  const mapped = pages.flatMap((page) => {
+    const item = mapTaskPage(page);
+    return item ? [item] : [];
+  });
+  return {
+    tasks: mapped.map((item) => item.task),
+    people: mapped.flatMap((item) => item.people),
+  };
+}
+
+export async function updateTaskStatus(id: string, status: TaskStatus) {
+  const label = notionStatusName(status);
+  if (!label) throw new Error("Unknown task status");
+  const { client, call } = createNotionClient();
+  await call(() =>
+    client.pages.update({
+      page_id: id,
+      properties: {
+        [notionSchema.tasks.properties.status]: {
+          status: { name: label },
+        },
+      } as never,
+    }),
+  );
+}
+
+export async function readActivities() {
+  const pages = await queryAll(dataSourceId("activities"));
+  const mapped = pages.flatMap((page) => {
+    const item = mapActivityPage(page);
+    return item ? [item] : [];
+  });
+  return {
+    activities: mapped.map((item) => item.activity),
+    people: mapped.flatMap((item) => item.people),
+  };
+}
+
+export async function readResources() {
+  const pages = await queryAll(dataSourceId("resources"));
+  return pages.flatMap((page) => {
+    const item = mapResourcePage(page);
+    return item ? [item] : [];
+  });
+}
+
+export function notionTasks(): TaskRepository {
+  return {
+    async list() {
+      const result = await readTasks();
+      return result.tasks;
+    },
+  };
+}
+
+export function notionActivities(): ActivityRepository {
+  return {
+    async list() {
+      const result = await readActivities();
+      return result.activities;
+    },
+  };
+}
+
+export function notionResources(): ResourceRepository {
+  return {
+    async list() {
+      return readResources();
+    },
+  };
+}
+
+export function mergePeople(groups: NotionPerson[][]) {
+  const people = new Map<string, NotionPerson>();
+  for (const group of groups) {
+    for (const person of group) people.set(person.id, person);
+  }
+  return [...people.values()];
 }

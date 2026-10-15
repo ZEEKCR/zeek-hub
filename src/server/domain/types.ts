@@ -9,6 +9,8 @@ export type Priority = "P0" | "P1" | "P2" | "P3";
 export type DateRange = {
   start?: string;
   end?: string;
+  /** False when Notion stored a date without a time. */
+  timed?: boolean;
 };
 
 export type Volunteer = {
@@ -52,9 +54,36 @@ export type Task = {
   updatedAt: string;
 };
 
+export type Activity = {
+  id: string;
+  title: string;
+  kind: string;
+  published: boolean;
+  place?: string;
+  format?: string;
+  link?: string;
+  start?: string;
+  end?: string;
+  /** False when Notion stored a date without a time. */
+  timed?: boolean;
+  teamIds: string[];
+  volunteerIds: string[];
+};
+
+export type ResourceItem = {
+  id: string;
+  title: string;
+  url: string;
+  type: string;
+  teamId: string;
+  tags: string[];
+  visibility: "volunteers" | "core";
+};
+
 export type Actor = {
   userId: string;
   volunteerId: string | null;
+  notionUserId?: string | null;
   username: string;
   displayName: string;
   role: Role;

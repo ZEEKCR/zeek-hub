@@ -84,6 +84,7 @@ export async function buildActor(userId: string): Promise<Actor | null> {
   return {
     userId: row.id,
     volunteerId,
+    notionUserId: volunteer?.notionUserId ?? null,
     username: row.username,
     displayName: row.displayUsername || row.name,
     role: asRole(row.role),

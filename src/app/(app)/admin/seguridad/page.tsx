@@ -1,7 +1,8 @@
-import { ensureMigrated, getDb } from "@/server/db/client";
-import { auditLog, loginAttempts } from "@/server/db/schema";
+import { desc, inArray } from "drizzle-orm";
+import { formatCostaRica } from "@/lib/dates";
 import { requireActor } from "@/server/auth/request";
-import { desc } from "drizzle-orm";
+import { ensureMigrated, getDb } from "@/server/db/client";
+import { auditLog, loginAttempts, user } from "@/server/db/schema";
 
 export default async function SecurityPage() {
   const actor = await requireActor();
@@ -14,6 +15,19 @@ export default async function SecurityPage() {
     .from(auditLog)
     .orderBy(desc(auditLog.at))
     .limit(20);
+  const actorIds = [
+    ...new Set(
+      events.flatMap((event) => (event.actorId ? [event.actorId] : [])),
+    ),
+  ];
+  const accounts =
+    actorIds.length === 0
+      ? []
+      : await getDb()
+          .select({ id: user.id, username: user.username })
+          .from(user)
+          .where(inArray(user.id, actorIds));
+  const names = new Map(accounts.map((row) => [row.id, row.username]));
   return (
     <div className="grid gap-6">
       <h1 className="text-4xl font-semibold">Seguridad</h1>
@@ -37,7 +51,12 @@ export default async function SecurityPage() {
         <ul className="mt-3 grid gap-2 text-sm">
           {events.map((event) => (
             <li key={event.id}>
-              {event.action} · {event.entityId ?? event.entity}
+              {formatCostaRica(event.at, "d MMM yyyy, HH:mm")} ·{" "}
+              {event.actorId
+                ? (names.get(event.actorId) ?? "Usuario")
+                : "Sistema"}{" "}
+              · {event.action}
+              {event.entityId ? ` · ${event.entityId}` : ""}
             </li>
           ))}
         </ul>

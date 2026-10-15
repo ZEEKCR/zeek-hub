@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
 import { verifyNotionSignature } from "@/server/sync/signature";
-import { mapVolunteerPage } from "@/server/repositories/notion/mappers";
+import {
+  mapActivityPage,
+  mapTaskPage,
+  mapVolunteerPage,
+  notionStatusName,
+} from "@/server/repositories/notion/mappers";
 
 describe("notion boundaries", () => {
   it("accepts a valid webhook signature and rejects a bad one", () => {
@@ -34,5 +39,46 @@ describe("notion boundaries", () => {
     expect(mapped?.name).toBe("Ana");
     expect(mapped?.role).toBe("volunteer");
     expect(mapped?.teamIds).toEqual(["team-growth"]);
+  });
+
+  it("maps a task from the existing Tasks properties", () => {
+    const mapped = mapTaskPage({
+      id: "task-1",
+      last_edited_time: "2026-10-14T12:00:00.000Z",
+      properties: {
+        Task: { type: "title", title: [{ plain_text: "Cerrar lista" }] },
+        Status: { type: "status", status: { name: "In progress" } },
+        Priority: { type: "select", select: { name: "P1" } },
+        Area: { type: "select", select: { name: "Logistics" } },
+        "Due Date": { type: "date", date: { start: "2026-10-20" } },
+        Assignee: {
+          type: "people",
+          people: [{ id: "user-1", name: "Ana" }],
+        },
+        Activity: { type: "relation", relation: [{ id: "event-1" }] },
+      },
+    });
+    expect(mapped?.task.status).toBe("in_progress");
+    expect(mapped?.task.teamIds).toEqual(["team-logistics"]);
+    expect(mapped?.task.dueDate?.start).toBe("2026-10-20T18:00:00.000Z");
+    expect(mapped?.task.dueDate?.timed).toBe(false);
+    expect(notionStatusName("in_progress")).toBe("In progress");
+    expect(mapped?.people[0]?.name).toBe("Ana");
+  });
+
+  it("hides a cancelled activity", () => {
+    const mapped = mapActivityPage({
+      id: "event-1",
+      properties: {
+        Activity: { type: "title", title: [{ plain_text: "Encuentro" }] },
+        Type: { type: "select", select: { name: "Meetup" } },
+        Status: { type: "select", select: { name: "Cancelled" } },
+        Date: { type: "date", date: { start: "2026-11-01T18:00:00.000Z" } },
+      },
+    });
+    expect(mapped?.activity.published).toBe(false);
+    expect(mapped?.activity.kind).toBe("Meetup");
+    expect(mapped?.activity.start).toBe("2026-11-01T18:00:00.000Z");
+    expect(mapped?.activity.timed).toBe(true);
   });
 });

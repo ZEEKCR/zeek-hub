@@ -1,4 +1,10 @@
-import type { Team, Volunteer } from "@/server/domain/types";
+import type {
+  Activity,
+  ResourceItem,
+  Task,
+  Team,
+  Volunteer,
+} from "@/server/domain/types";
 
 export interface VolunteerRepository {
   list(): Promise<Volunteer[]>;
@@ -13,7 +19,22 @@ export interface TeamRepository {
   upsert(team: Team): Promise<Team>;
 }
 
+export interface TaskRepository {
+  list(): Promise<Task[]>;
+}
+
+export interface ActivityRepository {
+  list(): Promise<Activity[]>;
+}
+
+export interface ResourceRepository {
+  list(): Promise<ResourceItem[]>;
+}
+
 export type Repositories = {
   volunteers: VolunteerRepository;
   teams: TeamRepository;
+  tasks: TaskRepository;
+  activities: ActivityRepository;
+  resources: ResourceRepository;
 };

@@ -16,11 +16,17 @@ let authInstance: AuthInstance | undefined;
 
 function createAuth() {
   const env = getEnv();
+  const secureCookies = env.NODE_ENV === "production";
   return betterAuth({
     appName: "ZEEK Hub",
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
-    trustedOrigins: [env.BETTER_AUTH_URL],
+    trustedOrigins: [
+      env.BETTER_AUTH_URL,
+      ...(env.NODE_ENV === "development"
+        ? ["http://localhost:3000", "http://127.0.0.1:3000"]
+        : []),
+    ],
     database: withHashedSessionTokens(
       drizzleAdapter(getDb(), {
         provider: "pg",
@@ -60,13 +66,13 @@ function createAuth() {
       },
     },
     advanced: {
-      useSecureCookies: true,
+      useSecureCookies: secureCookies,
       cookies: {
         session_token: {
           name: "zeek_session",
           attributes: {
             httpOnly: true,
-            secure: true,
+            secure: secureCookies,
             sameSite: "lax",
             path: "/",
           },

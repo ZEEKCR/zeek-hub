@@ -42,17 +42,21 @@ export function CreateUserForm({
       />
       {allowRole ? (
         <>
-          <select
-            name="teamId"
-            className="bg-surface-2 h-12 rounded-[14px] px-4"
-            defaultValue={teams[0]?.id}
-          >
-            {teams.map((team) => (
-              <option key={team.id} value={team.id}>
-                {team.name}
-              </option>
-            ))}
-          </select>
+          <label htmlFor="teamId" className="grid gap-1 text-sm font-medium">
+            Equipo
+            <select
+              id="teamId"
+              name="teamId"
+              className="bg-surface-2 h-12 rounded-[14px] px-4"
+              defaultValue={teams[0]?.id}
+            >
+              {teams.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <select
             name="role"
             className="bg-surface-2 h-12 rounded-[14px] px-4"

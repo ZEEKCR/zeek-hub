@@ -1,5 +1,8 @@
 import type { Team, Volunteer } from "@/server/domain/types";
 import type {
+  ActivityRepository,
+  ResourceRepository,
+  TaskRepository,
   TeamRepository,
   VolunteerRepository,
 } from "@/server/repositories/interfaces";
@@ -104,6 +107,30 @@ export function memoryTeams(): TeamRepository {
       if (index >= 0) state.teams[index] = team;
       else state.teams.push(team);
       return team;
+    },
+  };
+}
+
+export function memoryTasks(): TaskRepository {
+  return {
+    async list() {
+      return [];
+    },
+  };
+}
+
+export function memoryActivities(): ActivityRepository {
+  return {
+    async list() {
+      return [];
+    },
+  };
+}
+
+export function memoryResources(): ResourceRepository {
+  return {
+    async list() {
+      return [];
     },
   };
 }

@@ -1,9 +1,15 @@
 import { getEnv } from "@/env";
 import {
+  memoryActivities,
+  memoryResources,
+  memoryTasks,
   memoryTeams,
   memoryVolunteers,
 } from "@/server/repositories/memory/store";
 import {
+  notionActivities,
+  notionResources,
+  notionTasks,
   notionTeams,
   notionVolunteers,
 } from "@/server/repositories/notion/repos";
@@ -14,9 +20,21 @@ let memory: Repositories | undefined;
 
 export function repositories(): Repositories {
   if (getEnv().NOTION_MODE !== "live") {
-    memory ??= { volunteers: memoryVolunteers(), teams: memoryTeams() };
+    memory ??= {
+      volunteers: memoryVolunteers(),
+      teams: memoryTeams(),
+      tasks: memoryTasks(),
+      activities: memoryActivities(),
+      resources: memoryResources(),
+    };
     return memory;
   }
-  live ??= { volunteers: notionVolunteers(), teams: notionTeams() };
+  live ??= {
+    volunteers: notionVolunteers(),
+    teams: notionTeams(),
+    tasks: notionTasks(),
+    activities: notionActivities(),
+    resources: notionResources(),
+  };
   return live;
 }

@@ -24,6 +24,7 @@ type AdapterArgs = {
   data?: Record<string, unknown>;
   where?: Where[];
   update?: Record<string, unknown>;
+  join?: unknown;
 };
 
 type Adapter = {
@@ -66,18 +67,12 @@ function rewriteWhere(
 }
 
 function withWhere(args: AdapterArgs, where: Where[] | undefined): AdapterArgs {
-  if (!where)
-    return {
-      model: args.model,
-      ...(args.data ? { data: args.data } : {}),
-      ...(args.update ? { update: args.update } : {}),
-    };
-  return {
-    model: args.model,
-    where,
-    ...(args.data ? { data: args.data } : {}),
-    ...(args.update ? { update: args.update } : {}),
-  };
+  if (!where) {
+    const { where: omitted, ...rest } = args;
+    void omitted;
+    return rest;
+  }
+  return { ...args, where };
 }
 function restoreToken(
   row: Record<string, unknown> | null,

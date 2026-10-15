@@ -63,6 +63,11 @@ export const notionSchema = {
     /** Database prefix f9e27214 / data source prefix 1cceb8bf */
     dataSourceEnv: "NOTION_DS_TASKS",
     properties: {
+      title: "Task",
+      status: "Status",
+      priority: "Priority",
+      notes: "Notes",
+      activity: "Activity",
       assigneeLegacy: "Assignee",
       areaLegacy: "Area",
       due: "Due Date",
@@ -71,11 +76,27 @@ export const notionSchema = {
       start: "Fecha inicio",
       updatedByApp: "Actualizado por app",
     },
+    statusMap: {
+      "Not started": "not_started",
+      Blocked: "blocked",
+      "In progress": "in_progress",
+      Done: "done",
+    },
   },
   activities: {
     /** Database prefix 2755c194 / data source prefix 14ca8dbc */
     dataSourceEnv: "NOTION_DS_ACTIVITIES",
     properties: {
+      title: "Activity",
+      date: "Date",
+      type: "Type",
+      status: "Status",
+      owner: "Owner",
+      info: "Info",
+      media: "Media",
+      board: "Board",
+      notes: "Notes",
+      tasks: "Tasks",
       place: "Lugar",
       format: "Formato",
       registrationLink: "Link registro",

@@ -1,12 +1,25 @@
 import Link from "next/link";
-import { requireActor } from "@/server/auth/request";
-import { readyAuth } from "@/server/auth/config";
 import { headers } from "next/headers";
+import { formatCostaRica } from "@/lib/dates";
+import { sessionDevice } from "@/lib/session-device";
+import { readyAuth } from "@/server/auth/config";
+import { requireActor } from "@/server/auth/request";
 
 export default async function ProfilePage() {
   const actor = await requireActor();
   const auth = await readyAuth();
   const sessions = await auth.api.listSessions({ headers: await headers() });
+  const devices = new Map<string, (typeof sessions)[number]>();
+  for (const item of sessions) {
+    const label = sessionDevice(item.userAgent);
+    const current = devices.get(label);
+    if (
+      !current ||
+      new Date(item.expiresAt).getTime() > new Date(current.expiresAt).getTime()
+    ) {
+      devices.set(label, item);
+    }
+  }
   return (
     <div className="grid gap-6">
       <h1 className="text-4xl font-semibold">Perfil</h1>
@@ -25,15 +38,13 @@ export default async function ProfilePage() {
       <section className="bg-surface-1 rounded-[28px] p-6">
         <h2 className="text-2xl font-semibold">Sesiones activas</h2>
         <ul className="mt-4 grid gap-3">
-          {sessions.map((item) => (
+          {[...devices.entries()].map(([label, item]) => (
             <li
-              key={item.id}
+              key={label}
               className="bg-surface-2 rounded-[20px] px-4 py-3 text-sm"
             >
-              {item.userAgent || "Sesión"} · vence{" "}
-              {new Date(item.expiresAt).toLocaleString("es-CR", {
-                timeZone: "America/Costa_Rica",
-              })}
+              {label} · vence{" "}
+              {formatCostaRica(item.expiresAt, "d MMM yyyy, HH:mm")}
             </li>
           ))}
         </ul>
