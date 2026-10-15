@@ -10,6 +10,19 @@ import { authSchema } from "@/server/db/schema";
 
 const ABSOLUTE_SESSION_MS = 30 * 24 * 60 * 60 * 1000;
 
+function authOrigins(baseURL: string, nodeEnv: string) {
+  const origins = new Set<string>([baseURL, "https://zeek-hub.vercel.app"]);
+  const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const deploymentHost = process.env.VERCEL_URL;
+  if (productionHost) origins.add(`https://${productionHost}`);
+  if (deploymentHost) origins.add(`https://${deploymentHost}`);
+  if (nodeEnv === "development") {
+    origins.add("http://localhost:3000");
+    origins.add("http://127.0.0.1:3000");
+  }
+  return [...origins];
+}
+
 type AuthInstance = ReturnType<typeof createAuth>;
 
 let authInstance: AuthInstance | undefined;
@@ -21,12 +34,7 @@ function createAuth() {
     appName: "ZEEK Hub",
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
-    trustedOrigins: [
-      env.BETTER_AUTH_URL,
-      ...(env.NODE_ENV === "development"
-        ? ["http://localhost:3000", "http://127.0.0.1:3000"]
-        : []),
-    ],
+    trustedOrigins: authOrigins(env.BETTER_AUTH_URL, env.NODE_ENV),
     database: withHashedSessionTokens(
       drizzleAdapter(getDb(), {
         provider: "pg",
