@@ -1,8 +1,8 @@
 import { CreateUserForm } from "@/app/(app)/admin/usuarios/create-user-form";
 import { requireActor } from "@/server/auth/request";
-import { listDirectory } from "@/server/services/users";
 import { ensureMigrated, getDb } from "@/server/db/client";
 import { user } from "@/server/db/schema";
+import { INITIAL_TEAMS } from "@/server/repositories/memory/store";
 
 export default async function AdminUsersPage() {
   const actor = await requireActor();
@@ -11,7 +11,6 @@ export default async function AdminUsersPage() {
   }
   await ensureMigrated();
   const users = await getDb().select().from(user);
-  const directory = await listDirectory(actor);
   return (
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
       <section>
@@ -31,7 +30,7 @@ export default async function AdminUsersPage() {
         </ul>
       </section>
       <CreateUserForm
-        teams={directory.teams.map((team) => ({
+        teams={INITIAL_TEAMS.map((team) => ({
           id: team.id,
           name: team.name,
         }))}

@@ -1,4 +1,4 @@
-import type { TaskStatus } from "@/server/domain/types";
+import type { TaskStatus, ActivityStage } from "@/server/domain/types";
 
 export const STATUS_LABEL: Record<TaskStatus, string> = {
   not_started: "Por hacer",
@@ -12,4 +12,19 @@ export const STATUS_ORDER: TaskStatus[] = [
   "in_progress",
   "blocked",
   "done",
+];
+
+export const STAGE_LABEL: Record<ActivityStage, string> = {
+  idea: "Idea",
+  development: "En desarrollo",
+  execution: "En ejecución",
+  finished: "Finalizado",
+  cancelled: "Cancelado",
+};
+
+export const STAGE_ORDER: ActivityStage[] = [
+  "idea",
+  "development",
+  "execution",
+  "finished",
 ];

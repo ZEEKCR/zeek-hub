@@ -7,12 +7,14 @@ import type {
 } from "@/server/domain/types";
 import { formatCostaRica } from "@/lib/dates";
 import { INITIAL_TEAMS } from "@/server/repositories/memory/store";
+import { collapsePeople } from "@/server/catalog/people";
 import type { NotionPerson } from "@/server/repositories/notion/mappers";
 
 export type CatalogPerson = {
   id: string;
   name: string;
   teamId: string;
+  aliasIds: string[];
 };
 
 export type CatalogTeam = {
@@ -46,6 +48,14 @@ export function canEditTask(actor: Actor, task: Task) {
     assigneeIds: task.assigneeIds,
     teamIds: task.teamIds,
   });
+}
+
+export function canEditActivity(actor: Actor, activity: Activity) {
+  if (actor.role === "admin") return true;
+  return (
+    actor.role === "head" &&
+    activity.teamIds.some((id) => actor.headOfTeamIds.includes(id))
+  );
 }
 
 export function canSeeContact(actor: Actor, teamIds: string[]) {
@@ -88,17 +98,21 @@ export function assembleCatalog(input: {
       if (!personTeam.has(personId)) personTeam.set(personId, teamId);
     }
   }
-  const people = new Map<string, CatalogPerson>();
-  for (const person of input.people) {
-    people.set(person.id, {
+  const collapsed = collapsePeople(input.people);
+  const people = collapsed.map((person) => {
+    const teamId = [person.id, ...person.aliasIds]
+      .map((id) => personTeam.get(id))
+      .find((id) => Boolean(id));
+    return {
       id: person.id,
       name: person.name,
-      teamId: personTeam.get(person.id) ?? "",
-    });
-  }
+      aliasIds: person.aliasIds,
+      teamId: teamId ?? "",
+    };
+  });
   return {
     connected: true,
-    people: [...people.values()],
+    people,
     teams: [...teamName.entries()].map(([id, name]) => ({
       id,
       name,
@@ -113,9 +127,14 @@ export function assembleCatalog(input: {
 export function viewOf(catalog: Catalog) {
   return {
     personName(id: string) {
-      return (
-        catalog.people.find((person) => person.id === id)?.name ?? "Sin asignar"
+      const match = catalog.people.find(
+        (person) => person.id === id || person.aliasIds.includes(id),
       );
+      return match?.name ?? "Sin asignar";
+    },
+    personIds(id: string) {
+      const match = catalog.people.find((person) => person.id === id);
+      return match ? [match.id, ...match.aliasIds] : [id];
     },
     teamName(id: string) {
       return catalog.teams.find((team) => team.id === id)?.name ?? "Equipo";

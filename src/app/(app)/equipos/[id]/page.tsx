@@ -1,7 +1,15 @@
 import { notFound } from "next/navigation";
+import { publicEmail } from "@/server/auth/credentials";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
 import { canSeeContact } from "@/server/catalog/view";
+import { listTeamAccounts } from "@/server/services/users";
+
+function roleLabel(role: string) {
+  if (role === "admin") return "Admin";
+  if (role === "head") return "Líder";
+  return "Voluntario";
+}
 
 export default async function TeamDetailPage({
   params,
@@ -13,7 +21,9 @@ export default async function TeamDetailPage({
   const { id } = await params;
   const team = catalog.teams.find((item) => item.id === id);
   if (!team) notFound();
-  const members = catalog.people.filter((person) => person.teamId === team.id);
+  const members = (await listTeamAccounts()).filter(
+    (account) => account.teamId === team.id,
+  );
   const showContact = canSeeContact(actor, [team.id]);
   const tasks = catalog.tasks.filter((task) => task.teamIds.includes(team.id));
 
@@ -24,23 +34,26 @@ export default async function TeamDetailPage({
       </h1>
       <section className="grid gap-3">
         <h2 className="text-2xl font-semibold">Miembros</h2>
-        {members.map((member) => (
-          <article key={member.id} className="bg-surface-1 rounded-[20px] p-4">
-            <h3 className="font-semibold">
-              {member.name}
-              {team.headIds.includes(member.id) ? (
-                <span className="bg-violet text-on-violet ml-2 rounded-full px-2 py-1 text-xs">
-                  Head
-                </span>
-              ) : null}
-            </h3>
-            <p className="text-muted mt-1 text-sm">
-              {showContact
-                ? "Correo y teléfono visibles para este equipo"
-                : "El contacto se ve dentro del equipo"}
-            </p>
-          </article>
-        ))}
+        {members.map((member) => {
+          const email = showContact ? publicEmail(member.email) : undefined;
+          return (
+            <article
+              key={member.id}
+              className="bg-surface-1 rounded-[20px] p-4"
+            >
+              <h3 className="font-semibold">
+                {member.displayUsername || member.name}
+              </h3>
+              <p className="text-muted mt-1 text-sm">
+                @{member.username} · {roleLabel(member.role)}
+              </p>
+              {email ? <p className="text-muted text-sm">{email}</p> : null}
+            </article>
+          );
+        })}
+        {members.length === 0 ? (
+          <p className="text-muted">No hay cuentas en este equipo.</p>
+        ) : null}
       </section>
       <section className="grid gap-3">
         <h2 className="text-2xl font-semibold">Tareas del equipo</h2>

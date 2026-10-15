@@ -19,6 +19,7 @@ import {
 } from "@/server/catalog/focus";
 import { loadCatalog } from "@/server/catalog/load";
 import { dayKey, todayKey, viewOf } from "@/server/catalog/view";
+import { isArchivedTask } from "@/server/catalog/archive";
 
 export default async function HomePage({
   searchParams,
@@ -28,7 +29,9 @@ export default async function HomePage({
   const actor = await requireActor();
   const catalog = await loadCatalog();
   const view = viewOf(catalog);
-  const tasks = catalog.tasks;
+  const tasks = catalog.tasks.filter(
+    (task) => !isArchivedTask(task, catalog.activities),
+  );
   const raw = await searchParams;
   const search = searchRecord(raw);
   const filter = one(raw.filtro) ?? "all";

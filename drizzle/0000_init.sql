@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS "user" (
   "must_change_password" boolean NOT NULL DEFAULT false,
   "temp_password_expires_at" timestamptz,
   "notion_volunteer_id" text,
+  "team_id" text,
   "created_by" text,
   "privacy_accepted_at" timestamptz
 );
@@ -130,3 +131,5 @@ CREATE TABLE IF NOT EXISTS "sync_state" (
   "last_run_at" timestamptz,
   "status" text NOT NULL DEFAULT 'idle'
 );
+--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "team_id" text;

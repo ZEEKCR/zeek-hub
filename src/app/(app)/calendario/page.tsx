@@ -12,6 +12,7 @@ import { one, searchRecord } from "@/lib/query";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
 import { dayKey, todayKey, viewOf } from "@/server/catalog/view";
+import { isArchivedTask } from "@/server/catalog/archive";
 import type { TaskStatus } from "@/server/domain/types";
 
 type Item = {
@@ -51,7 +52,7 @@ export default async function CalendarPage({
   const catalogView = viewOf(catalog);
   const raw = await searchParams;
   const search = searchRecord(raw);
-  const view = one(raw.vista) ?? "lista";
+  const view = one(raw.vista) ?? "mes";
   const month = monthParam(one(raw.mes));
   const today = todayKey();
   const selected = dayParam(one(raw.dia), today);
@@ -68,6 +69,7 @@ export default async function CalendarPage({
       day: dayKey(activity.start ?? today),
     })),
     ...catalog.tasks.flatMap((task) => {
+      if (isArchivedTask(task, catalog.activities)) return [];
       const start = task.dueDate?.start;
       if (!start) return [];
       return [
@@ -83,7 +85,9 @@ export default async function CalendarPage({
       ];
     }),
   ];
-  const undated = catalog.tasks.filter((task) => !task.dueDate?.start);
+  const undated = catalog.tasks.filter(
+    (task) => !task.dueDate?.start && !isArchivedTask(task, catalog.activities),
+  );
   const count = costaRicaMonthLength(month);
   const lead = Number(formatCostaRica(`${month}-01T18:00:00Z`, "i")) - 1;
   const cells = [
@@ -131,9 +135,9 @@ export default async function CalendarPage({
         param="vista"
         value={view}
         options={[
-          { id: "lista", label: "Lista" },
-          { id: "semana", label: "Semana" },
           { id: "mes", label: "Mes" },
+          { id: "semana", label: "Semana" },
+          { id: "lista", label: "Lista" },
         ]}
       />
       {view !== "mes" ? (

@@ -6,6 +6,7 @@ import type {
   Role,
   Task,
   TaskStatus,
+  ActivityStage,
   Team,
   Volunteer,
   VolunteerStatus,
@@ -53,7 +54,11 @@ type Property = {
   multi_select?: { name: string }[];
   status?: { name?: string } | null;
   date?: { start?: string | null; end?: string | null } | null;
-  people?: { id?: string; name?: string | null }[];
+  people?: {
+    id?: string;
+    name?: string | null;
+    type?: string;
+  }[];
   last_edited_time?: string;
 };
 
@@ -87,6 +92,29 @@ export function notionStatusName(status: TaskStatus) {
   return match?.[0] ?? null;
 }
 
+const stageFromNotion: Record<string, ActivityStage> = {
+  Planned: "idea",
+  Idea: "idea",
+  "En desarrollo": "development",
+  Confirmed: "execution",
+  "En ejecución": "execution",
+  Done: "finished",
+  Finalizado: "finished",
+  Cancelled: "cancelled",
+};
+
+const stageToNotion: Record<ActivityStage, string> = {
+  idea: "Planned",
+  development: "En desarrollo",
+  execution: "Confirmed",
+  finished: "Done",
+  cancelled: "Cancelled",
+};
+
+export function notionStageName(stage: ActivityStage) {
+  return stageToNotion[stage];
+}
+
 function includesTime(value: string | null | undefined) {
   return Boolean(value?.includes("T"));
 }
@@ -108,7 +136,7 @@ function relations(property: Property | undefined) {
 
 function peopleOf(property: Property | undefined): NotionPerson[] {
   return (property?.people ?? []).flatMap((person) => {
-    if (!person.id) return [];
+    if (!person.id || person.type === "bot") return [];
     return [{ id: person.id, name: person.name?.trim() || "Sin nombre" }];
   });
 }
@@ -301,6 +329,7 @@ export function mapTaskPage(page: {
   }
   const notes = textOf(properties[names.notes]);
   if (notes) task.notes = notes;
+  if (area) task.area = area;
   return { task, people };
 }
 
@@ -321,6 +350,7 @@ export function mapActivityPage(page: {
     id: page.id,
     title,
     kind: properties[names.type]?.select?.name ?? "Actividad",
+    stage: (statusName && stageFromNotion[statusName]) || "idea",
     published: publish ?? statusName !== "Cancelled",
     teamIds: relations(properties[names.teams]),
     volunteerIds: [
@@ -349,6 +379,8 @@ export function mapActivityPage(page: {
   if (place) activity.place = place;
   if (format) activity.format = format;
   if (link) activity.link = link;
+  const notes = textOf(properties[names.notes]);
+  if (notes) activity.notes = notes;
   return { activity, people: owners };
 }
 

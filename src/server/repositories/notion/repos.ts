@@ -1,5 +1,10 @@
 import { collectPaginatedAPI, isNotionClientError } from "@notionhq/client";
-import type { TaskStatus, Team, Volunteer } from "@/server/domain/types";
+import type {
+  ActivityStage,
+  TaskStatus,
+  Team,
+  Volunteer,
+} from "@/server/domain/types";
 import { createNotionClient } from "@/server/repositories/notion/client";
 import {
   mapActivityPage,
@@ -8,6 +13,7 @@ import {
   mapTeamPage,
   mapVolunteerPage,
   notionStatusName,
+  notionStageName,
   volunteerToProperties,
   type NotionPerson,
 } from "@/server/repositories/notion/mappers";
@@ -85,36 +91,41 @@ export function notionVolunteers(): VolunteerRepository {
       return all.find((volunteer) => volunteer.userId === userId) ?? null;
     },
     async upsert(volunteer: Volunteer) {
-      const { client, call } = createNotionClient();
-      const properties = volunteerToProperties(volunteer);
-      if (
-        volunteer.id &&
-        !volunteer.id.startsWith("team-") &&
-        volunteer.id.includes("-") &&
-        volunteer.updatedAt
-      ) {
-        try {
-          await call(() =>
-            client.pages.update({
-              page_id: volunteer.id,
-              properties: properties as never,
-            }),
-          );
-          return volunteer;
-        } catch {
-          // A new volunteer id is local until Notion assigns one.
+      try {
+        const { client, call } = createNotionClient();
+        const properties = volunteerToProperties(volunteer);
+        if (
+          volunteer.id &&
+          !volunteer.id.startsWith("team-") &&
+          volunteer.id.includes("-") &&
+          volunteer.updatedAt
+        ) {
+          try {
+            await call(() =>
+              client.pages.update({
+                page_id: volunteer.id,
+                properties: properties as never,
+              }),
+            );
+            return volunteer;
+          } catch {
+            // A new volunteer id is local until Notion assigns one.
+          }
         }
+        const created = await call(() =>
+          client.pages.create({
+            parent: {
+              type: "data_source_id",
+              data_source_id: dataSourceId("volunteers"),
+            },
+            properties: properties as never,
+          }),
+        );
+        return { ...volunteer, id: created.id };
+      } catch (error) {
+        if (notionUnavailable(error)) return volunteer;
+        throw error;
       }
-      const created = await call(() =>
-        client.pages.create({
-          parent: {
-            type: "data_source_id",
-            data_source_id: dataSourceId("volunteers"),
-          },
-          properties: properties as never,
-        }),
-      );
-      return { ...volunteer, id: created.id };
     },
   };
 }
@@ -181,6 +192,20 @@ export async function readActivities() {
     activities: mapped.map((item) => item.activity),
     people: mapped.flatMap((item) => item.people),
   };
+}
+
+export async function updateActivityStage(id: string, stage: ActivityStage) {
+  const { client, call } = createNotionClient();
+  await call(() =>
+    client.pages.update({
+      page_id: id,
+      properties: {
+        [notionSchema.activities.properties.status]: {
+          select: { name: notionStageName(stage) },
+        },
+      } as never,
+    }),
+  );
 }
 
 export async function readResources() {

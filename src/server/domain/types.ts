@@ -4,6 +4,9 @@ export type VolunteerStatus = "active" | "onboarding" | "inactive";
 
 export type TaskStatus = "not_started" | "blocked" | "in_progress" | "done";
 
+export type ActivityStage =
+  "idea" | "development" | "execution" | "finished" | "cancelled";
+
 export type Priority = "P0" | "P1" | "P2" | "P3";
 
 export type DateRange = {
@@ -51,6 +54,7 @@ export type Task = {
   teamIds: string[];
   activityIds: string[];
   notes?: string;
+  area?: string;
   updatedAt: string;
 };
 
@@ -58,10 +62,12 @@ export type Activity = {
   id: string;
   title: string;
   kind: string;
+  stage: ActivityStage;
   published: boolean;
   place?: string;
   format?: string;
   link?: string;
+  notes?: string;
   start?: string;
   end?: string;
   /** False when Notion stored a date without a time. */

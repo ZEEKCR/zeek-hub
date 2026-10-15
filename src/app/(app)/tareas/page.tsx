@@ -1,12 +1,12 @@
+import Link from "next/link";
 import { KanbanBoard } from "@/components/tasks/kanban-board";
-import { KpiStat } from "@/components/ui/kpi-stat";
-import { QueryChips } from "@/components/ui/query-chips";
+import { QuerySelect } from "@/components/ui/query-select";
 import { one, searchRecord } from "@/lib/query";
 import { formatCostaRica, formatWhen } from "@/lib/dates";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
-import { STATUS_ORDER } from "@/server/catalog/status";
 import { canEditTask, dayKey, todayKey, viewOf } from "@/server/catalog/view";
+import { isArchivedTask } from "@/server/catalog/archive";
 
 export default async function TasksPage({
   searchParams,
@@ -23,8 +23,13 @@ export default async function TasksPage({
   const event = one(raw.evento) ?? "all";
   const mine = one(raw.mias) === "1";
   const filtered = catalog.tasks.filter((task) => {
+    if (isArchivedTask(task, catalog.activities)) return false;
     if (team !== "all" && !task.teamIds.includes(team)) return false;
-    if (person !== "all" && !task.assigneeIds.includes(person)) return false;
+    if (
+      person !== "all" &&
+      !view.personIds(person).some((id) => task.assigneeIds.includes(id))
+    )
+      return false;
     if (event !== "all" && !task.activityIds.includes(event)) return false;
     if (
       mine &&
@@ -38,78 +43,74 @@ export default async function TasksPage({
 
   return (
     <div className="grid gap-6">
-      <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
-        Tareas
-      </h1>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {STATUS_ORDER.map((status) => (
-          <KpiStat
-            key={status}
-            label={
-              status === "not_started"
-                ? "Por hacer"
-                : status === "in_progress"
-                  ? "En progreso"
-                  : status === "blocked"
-                    ? "Bloqueadas"
-                    : "Listas"
-            }
-            value={String(
-              filtered.filter((task) => task.status === status).length,
-            )}
-          />
-        ))}
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
+          Tareas
+        </h1>
+        {actor.role === "admin" || actor.role === "head" ? (
+          <Link
+            href="/tareas/nueva"
+            className="bg-accent inline-flex h-12 items-center rounded-full px-5 font-medium text-[#161616]"
+          >
+            Nueva tarea
+          </Link>
+        ) : null}
+      </header>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <QuerySelect
+          label="Equipo"
+          pathname="/tareas"
+          search={search}
+          param="equipo"
+          value={team}
+          options={[
+            { id: "all", label: "Todos los equipos" },
+            ...catalog.teams.map((item) => ({
+              id: item.id,
+              label: item.name,
+            })),
+          ]}
+        />
+        <QuerySelect
+          label="Responsable"
+          pathname="/tareas"
+          search={search}
+          param="responsable"
+          value={person}
+          options={[
+            { id: "all", label: "Todos" },
+            ...catalog.people.map((member) => ({
+              id: member.id,
+              label: member.name,
+            })),
+          ]}
+        />
+        <QuerySelect
+          label="Evento"
+          pathname="/tareas"
+          search={search}
+          param="evento"
+          value={event}
+          options={[
+            { id: "all", label: "Todos" },
+            ...view.publishedActivities().map((activity) => ({
+              id: activity.id,
+              label: activity.title,
+            })),
+          ]}
+        />
+        <QuerySelect
+          label="Alcance"
+          pathname="/tareas"
+          search={search}
+          param="mias"
+          value={mine ? "1" : "all"}
+          options={[
+            { id: "all", label: "Todas" },
+            { id: "1", label: "Solo mías" },
+          ]}
+        />
       </div>
-      <QueryChips
-        label="Equipo"
-        pathname="/tareas"
-        search={search}
-        param="equipo"
-        value={team}
-        options={[
-          { id: "all", label: "Todos los equipos" },
-          ...catalog.teams.map((item) => ({ id: item.id, label: item.name })),
-        ]}
-      />
-      <QueryChips
-        label="Responsable"
-        pathname="/tareas"
-        search={search}
-        param="responsable"
-        value={person}
-        options={[
-          { id: "all", label: "Todos" },
-          ...catalog.people.map((member) => ({
-            id: member.id,
-            label: member.name,
-          })),
-        ]}
-      />
-      <QueryChips
-        label="Evento"
-        pathname="/tareas"
-        search={search}
-        param="evento"
-        value={event}
-        options={[
-          { id: "all", label: "Todos" },
-          ...view.publishedActivities().map((activity) => ({
-            id: activity.id,
-            label: activity.title,
-          })),
-        ]}
-      />
-      <QueryChips
-        label="Alcance"
-        pathname="/tareas"
-        search={search}
-        param="mias"
-        value={mine ? "1" : "all"}
-        options={[
-          { id: "all", label: "Todas" },
-          { id: "1", label: "Solo mías" },
-        ]}
-      />
       <KanbanBoard
         key={`${team}:${person}:${event}:${mine ? "1" : "0"}`}
         tasks={filtered.map((task) => {

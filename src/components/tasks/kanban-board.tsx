@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { moveTaskAction } from "@/app/(app)/tareas/actions";
 import { STATUS_LABEL, STATUS_ORDER } from "@/server/catalog/status";
@@ -133,43 +134,47 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
                       {task.priority === "P0" || task.priority === "P1" ? (
                         <span className="bg-danger mr-2 inline-block size-2 rounded-full" />
                       ) : null}
-                      {task.title}
+                      <Link
+                        href={`/tareas/${task.id}`}
+                        className="hover:underline"
+                      >
+                        {task.title}
+                      </Link>
                     </h3>
                     {task.locked ? (
                       <Lock size={14} aria-label="Solo lectura" />
                     ) : null}
                   </div>
-                  <p className="text-muted mt-2 text-sm">
-                    {task.assignee} · {task.team}
+                  <p className="text-muted mt-1 text-sm">
+                    {[
+                      task.meta,
+                      task.assignee !== "Sin asignar" ? task.assignee : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
-                  <p className="mt-1 text-sm">{task.meta}</p>
-                  {task.event ? (
-                    <p className="text-muted mt-1 text-sm">{task.event}</p>
-                  ) : null}
-                  <label className="mt-3 hidden gap-1 text-xs font-medium md:grid">
-                    Mover a
-                    <select
-                      className="bg-surface-2 h-11 rounded-full px-3 text-sm"
-                      value={task.status}
-                      disabled={task.locked || pending}
-                      onChange={(event) =>
-                        move(task.id, event.target.value as TaskStatus)
-                      }
-                    >
-                      {STATUS_ORDER.map((option) => (
-                        <option key={option} value={option}>
-                          {STATUS_LABEL[option]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <select
+                    aria-label={`Mover ${task.title}`}
+                    className="bg-surface-2 mt-3 hidden h-9 w-full rounded-full px-3 text-sm md:block"
+                    value={task.status}
+                    disabled={task.locked || pending}
+                    onChange={(event) =>
+                      move(task.id, event.target.value as TaskStatus)
+                    }
+                  >
+                    {STATUS_ORDER.map((option) => (
+                      <option key={option} value={option}>
+                        {STATUS_LABEL[option]}
+                      </option>
+                    ))}
+                  </select>
                   <button
                     type="button"
-                    className="bg-surface-2 mt-3 h-11 w-full rounded-full text-sm font-medium md:hidden"
+                    className="bg-surface-2 mt-3 h-9 w-full rounded-full text-sm md:hidden"
                     disabled={task.locked || pending}
                     onClick={() => setMovingId(task.id)}
                   >
-                    Mover a
+                    Mover
                   </button>
                 </article>
               ))}

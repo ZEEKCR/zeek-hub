@@ -1,7 +1,7 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { Actor, Role, Team } from "@/server/domain/types";
 import { ensureMigrated, getDb } from "@/server/db/client";
-import { account, loginAttempts, user } from "@/server/db/schema";
+import { account, auditLog, loginAttempts, user } from "@/server/db/schema";
 import { writeAudit } from "@/server/audit/log";
 import { readyAuth } from "@/server/auth/config";
 import {
@@ -28,6 +28,7 @@ import { authorize } from "@/server/auth/policy";
 import { err, ok, type Result } from "@/server/domain/result";
 import { LIMITS, consumeLimit } from "@/server/ratelimit/limiter";
 import { repositories } from "@/server/container";
+import { INITIAL_TEAMS } from "@/server/repositories/memory/store";
 import { getEnv } from "@/env";
 
 const TEMP_PASSWORD_MS = 72 * 60 * 60 * 1000;
@@ -296,7 +297,9 @@ export async function provisionUser(
   const uniqueTeamIds = [...new Set(teamIds)];
   const teams: Team[] = [];
   for (const teamId of uniqueTeamIds) {
-    const team = await repos.teams.get(teamId);
+    const team =
+      (await repos.teams.get(teamId)) ??
+      INITIAL_TEAMS.find((item) => item.id === teamId);
     if (!team) return err("validation", "El equipo no existe.");
     teams.push(team);
   }
@@ -329,6 +332,7 @@ export async function provisionUser(
         mustChangePassword: true,
         tempPasswordExpiresAt: expires,
         notionVolunteerId: volunteerId,
+        teamId: input.primaryTeamId,
         createdBy: input.createdBy,
         createdAt: now,
         updatedAt: now,
@@ -632,6 +636,57 @@ export async function listDirectory(actor: Actor) {
     };
   });
   return { volunteers: visible, teams };
+}
+
+const knownTeams = new Set(INITIAL_TEAMS.map((team) => team.id));
+let teamsRemembered = false;
+
+function teamIdFromAudit(value: unknown) {
+  if (!value || typeof value !== "object") return null;
+  const teamId = (value as { teamId?: unknown }).teamId;
+  return typeof teamId === "string" && knownTeams.has(teamId) ? teamId : null;
+}
+
+async function rememberTeamIds() {
+  if (teamsRemembered) return;
+  const events = await getDb()
+    .select({ entityId: auditLog.entityId, after: auditLog.after })
+    .from(auditLog)
+    .where(eq(auditLog.action, "user.create"));
+  for (const event of events) {
+    const teamId = teamIdFromAudit(event.after);
+    if (!event.entityId || !teamId) continue;
+    await getDb()
+      .update(user)
+      .set({ teamId })
+      .where(and(eq(user.id, event.entityId), isNull(user.teamId)));
+  }
+  teamsRemembered = true;
+}
+
+export async function listTeamAccounts() {
+  await ensureMigrated();
+  await rememberTeamIds();
+  const rows = await getDb()
+    .select({
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      displayUsername: user.displayUsername,
+      role: user.role,
+      email: user.email,
+      teamId: user.teamId,
+      banned: user.banned,
+    })
+    .from(user);
+  return rows
+    .filter((row) => !row.banned && row.teamId)
+    .sort((left, right) =>
+      (left.displayUsername || left.name).localeCompare(
+        right.displayUsername || right.name,
+        "es",
+      ),
+    );
 }
 
 export function contactEmail(email: string | null | undefined) {

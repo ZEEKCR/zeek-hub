@@ -7,10 +7,11 @@ const tones = [
 ];
 
 export function AvatarStack({ names }: { names: string[] }) {
-  const shown = names.slice(0, 3);
-  const extra = names.length - shown.length;
+  const unique = [...new Set(names.filter((name) => name.trim()))];
+  const shown = unique.slice(0, 3);
+  const extra = unique.length - shown.length;
   const label =
-    extra > 0 ? `${shown.join(", ")} y ${extra} más` : names.join(", ");
+    extra > 0 ? `${shown.join(", ")} y ${extra} más` : unique.join(", ");
   return (
     <div className="flex items-center" aria-label={label}>
       {shown.map((name, index) => (

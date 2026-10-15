@@ -5,6 +5,7 @@ import {
   mapActivityPage,
   mapTaskPage,
   mapVolunteerPage,
+  notionStageName,
   notionStatusName,
 } from "@/server/repositories/notion/mappers";
 
@@ -63,6 +64,8 @@ describe("notion boundaries", () => {
     expect(mapped?.task.dueDate?.start).toBe("2026-10-20T18:00:00.000Z");
     expect(mapped?.task.dueDate?.timed).toBe(false);
     expect(notionStatusName("in_progress")).toBe("In progress");
+    expect(notionStageName("finished")).toBe("Done");
+    expect(notionStageName("development")).toBe("En desarrollo");
     expect(mapped?.people[0]?.name).toBe("Ana");
   });
 
@@ -77,6 +80,7 @@ describe("notion boundaries", () => {
       },
     });
     expect(mapped?.activity.published).toBe(false);
+    expect(mapped?.activity.stage).toBe("cancelled");
     expect(mapped?.activity.kind).toBe("Meetup");
     expect(mapped?.activity.start).toBe("2026-11-01T18:00:00.000Z");
     expect(mapped?.activity.timed).toBe(true);

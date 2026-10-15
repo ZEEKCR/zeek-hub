@@ -9,13 +9,14 @@ import { one, searchRecord } from "@/lib/query";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
 import { dayKey, todayKey, viewOf } from "@/server/catalog/view";
+import { STAGE_LABEL } from "@/server/catalog/status";
 
 export default async function EventsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireActor();
+  const actor = await requireActor();
   const catalog = await loadCatalog();
   const view = viewOf(catalog);
   const raw = await searchParams;
@@ -40,9 +41,19 @@ export default async function EventsPage({
 
   return (
     <div className="grid gap-6">
-      <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
-        Eventos
-      </h1>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
+          Eventos
+        </h1>
+        {actor.role === "admin" || actor.role === "head" ? (
+          <Link
+            href="/eventos/nuevo"
+            className="bg-accent inline-flex h-12 items-center rounded-full px-5 font-medium text-[#161616]"
+          >
+            Nueva actividad
+          </Link>
+        ) : null}
+      </header>
       <QueryChips
         label="Alcance"
         pathname="/eventos"
@@ -82,7 +93,8 @@ export default async function EventsPage({
             href={`/eventos/${activity.id}`}
           >
             <p className="text-sm opacity-70">
-              {activity.kind}
+              {STAGE_LABEL[activity.stage]}
+              {activity.kind ? ` · ${activity.kind}` : ""}
               {activity.format ? ` · ${activity.format}` : ""}
             </p>
             <h2 className="mt-2 text-2xl font-semibold">{activity.title}</h2>
