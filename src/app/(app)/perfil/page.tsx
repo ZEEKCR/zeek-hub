@@ -25,7 +25,9 @@ export default async function ProfilePage() {
       <h1 className="text-4xl font-semibold">Perfil</h1>
       <section className="bg-surface-1 rounded-[28px] p-6">
         <p className="text-muted text-sm">Usuario</p>
-        <p className="text-2xl font-semibold">{actor.displayName}</p>
+        <p className="text-2xl font-semibold">
+          {actor.fullName || actor.displayName}
+        </p>
         <p className="text-muted mt-2">@{actor.username}</p>
         <p className="mt-4 text-sm">Rol: {actor.role}</p>
         <Link

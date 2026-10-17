@@ -10,6 +10,7 @@ export type Action =
   | "users.unlock"
   | "users.deactivate"
   | "users.changeRole"
+  | "users.rename"
   | "volunteers.viewContact"
   | "resources.viewCore"
   | "admin.sync"
@@ -79,6 +80,7 @@ export function authorize(
       return managesVolunteer(actor, resource);
     }
     case "users.changeRole":
+    case "users.rename":
     case "admin.sync":
     case "admin.audit":
     case "admin.tokens":
@@ -105,6 +107,7 @@ export const POLICY_ACTIONS: Action[] = [
   "users.unlock",
   "users.deactivate",
   "users.changeRole",
+  "users.rename",
   "volunteers.viewContact",
   "resources.viewCore",
   "admin.sync",

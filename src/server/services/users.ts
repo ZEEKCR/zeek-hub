@@ -517,6 +517,59 @@ export async function unlockAccount(
   return ok({ username: target.username });
 }
 
+export async function renameAccount(
+  actor: Actor,
+  userId: string,
+  fullName: string,
+): Promise<Result<{ name: string }>> {
+  const name = fullName.trim().replace(/\s+/g, " ");
+  if (name.length < 2 || name.length > 80) {
+    return err("validation", "El nombre debe tener entre 2 y 80 caracteres.");
+  }
+  const target = await targetActor(userId);
+  if (!target) return err("not_found", "Usuario no encontrado.");
+  if (
+    !authorize(actor, "users.rename", {
+      kind: "user",
+      role: target.role,
+      teamIds: target.teamIds,
+    })
+  ) {
+    return err("forbidden", "No tiene permiso para renombrar esta cuenta.");
+  }
+  await getDb()
+    .update(user)
+    .set({ name, updatedAt: new Date() })
+    .where(eq(user.id, userId));
+  if (target.volunteerId) {
+    try {
+      const repos = repositories();
+      const volunteer = await repos.volunteers.get(target.volunteerId);
+      if (volunteer)
+        await repos.volunteers.upsert({
+          ...volunteer,
+          name,
+          updatedAt: new Date().toISOString(),
+        });
+    } catch {
+      // The account name is the source of truth for matching; Notion catches up later.
+    }
+  }
+  if (getEnv().NOTION_MODE === "live") {
+    await ensureAssigneeOption(name).catch(() => undefined);
+  }
+  await writeAudit({
+    actorType: "user",
+    actorId: actor.userId,
+    action: "user.rename",
+    entity: "user",
+    entityId: userId,
+    before: { name: target.fullName ?? target.displayName },
+    after: { name },
+  });
+  return ok({ name });
+}
+
 export async function deactivateAccount(
   actor: Actor,
   userId: string,

@@ -5,6 +5,7 @@ import { requireActor } from "@/server/auth/request";
 import {
   createUserAs,
   deactivateAccount,
+  renameAccount,
   resetUserPassword,
   unlockAccount,
 } from "@/server/services/users";
@@ -60,6 +61,22 @@ export async function createUserAction(
         "Usuario creado. La contraseña temporal se muestra una sola vez.",
     },
   };
+}
+
+export async function renameUserAction(
+  _state: UserActionState,
+  formData: FormData,
+): Promise<UserActionState> {
+  const actor = await requireActor();
+  const result = await renameAccount(
+    actor,
+    String(formData.get("userId") ?? ""),
+    String(formData.get("name") ?? ""),
+  );
+  if (!result.ok) return result;
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/inicio");
+  return { ok: true, data: { message: "Nombre guardado." } };
 }
 
 export async function resetPasswordAction(formData: FormData) {
