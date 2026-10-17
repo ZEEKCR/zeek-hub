@@ -139,7 +139,7 @@ export function TaskEditor({
           </label>
         </div>
         <label className="field-label">
-          Evento
+          Evento o proyecto
           <select
             name="activityId"
             defaultValue={task?.activityId ?? ""}

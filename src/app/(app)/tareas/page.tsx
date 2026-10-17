@@ -98,7 +98,7 @@ export default async function TasksPage({
           ]}
         />
         <QuerySelect
-          label="Evento"
+          label="Evento o proyecto"
           pathname="/tareas"
           search={search}
           param="evento"
