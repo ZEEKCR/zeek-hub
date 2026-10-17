@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { TaskEditor } from "@/components/tasks/task-editor";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
-import { canEditTask, dayKey } from "@/server/catalog/view";
+import { canEditTask, dayKey, viewOf } from "@/server/catalog/view";
+import { listAssignableNames } from "@/server/services/users";
 
 export default async function TaskDetailPage({
   params,
@@ -22,6 +23,14 @@ export default async function TaskDetailPage({
     .map((activity) => ({ id: activity.id, title: activity.title }))
     .sort((left, right) => left.title.localeCompare(right.title, "es"));
 
+  const view = viewOf(catalog);
+  const assignees = task.assigneeIds
+    .filter((assigneeId) => assigneeId.startsWith("enc:"))
+    .map((assigneeId) => view.personName(assigneeId));
+  const people = [
+    ...new Set([...(await listAssignableNames()), ...assignees]),
+  ].sort((left, right) => left.localeCompare(right, "es"));
+
   return (
     <div className="grid gap-6">
       <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
@@ -30,6 +39,7 @@ export default async function TaskDetailPage({
       <TaskEditor
         locked={!canEditTask(actor, task)}
         activities={activities}
+        people={people}
         task={{
           id: task.id,
           title: task.title,
@@ -39,6 +49,7 @@ export default async function TaskDetailPage({
           ...(task.area ? { area: task.area } : {}),
           ...(task.activityIds[0] ? { activityId: task.activityIds[0] } : {}),
           ...(task.notes ? { notes: task.notes } : {}),
+          assignees,
         }}
       />
     </div>

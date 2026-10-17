@@ -85,7 +85,7 @@ export async function moveEventStageAction(
   if (!activity) {
     return { ok: false, message: "No se encontró el evento." };
   }
-  if (!canEditActivity(actor, activity)) {
+  if (!canEditActivity(actor)) {
     return { ok: false, message: "No se puede cambiar este evento." };
   }
   try {
@@ -115,7 +115,7 @@ export async function saveActivityAction(
   const catalog = await loadCatalog();
   const id = clean(formData.get("id"));
   if (!id) {
-    if (actor.role !== "admin" && actor.role !== "head") {
+    if (actor.role !== "admin") {
       return { ok: false, message: "No se puede crear la actividad." };
     }
     let created = "";
@@ -133,7 +133,7 @@ export async function saveActivityAction(
   }
   const activity = catalog.activities.find((item) => item.id === id);
   if (!activity) return { ok: false, message: "No se encontró la actividad." };
-  if (!canEditActivity(actor, activity)) {
+  if (!canEditActivity(actor)) {
     return { ok: false, message: "No se puede editar esta actividad." };
   }
   const preserveDate = Boolean(
@@ -167,7 +167,7 @@ export async function trashActivityAction(
   const catalog = await loadCatalog();
   const activity = catalog.activities.find((item) => item.id === id);
   if (!activity) return { ok: false, message: "No se encontró la actividad." };
-  if (!canEditActivity(actor, activity)) {
+  if (!canEditActivity(actor)) {
     return { ok: false, message: "No se puede borrar esta actividad." };
   }
   try {

@@ -1,6 +1,7 @@
 import { TaskEditor } from "@/components/tasks/task-editor";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
+import { listAssignableNames } from "@/server/services/users";
 
 export default async function NewTaskPage() {
   const actor = await requireActor();
@@ -13,6 +14,7 @@ export default async function NewTaskPage() {
       </h1>
       <TaskEditor
         locked={!canCreate}
+        people={await listAssignableNames()}
         activities={catalog.activities
           .filter((activity) => activity.published)
           .map((activity) => ({ id: activity.id, title: activity.title }))

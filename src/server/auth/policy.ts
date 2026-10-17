@@ -1,8 +1,10 @@
+import { actorAssigneeKeys } from "@/server/domain/assignee";
 import type { Actor, Role } from "@/server/domain/types";
 
 export type Action =
   | "content.view"
   | "tasks.view"
+  | "tasks.move"
   | "tasks.edit"
   | "tasks.create"
   | "users.create"
@@ -11,6 +13,7 @@ export type Action =
   | "users.deactivate"
   | "users.changeRole"
   | "users.rename"
+  | "users.delete"
   | "volunteers.viewContact"
   | "resources.viewCore"
   | "admin.sync"
@@ -30,21 +33,8 @@ function overlaps(left: string[], right: string[]) {
   return left.some((id) => right.includes(id));
 }
 
-function isSubset(inner: string[], outer: string[]) {
-  return inner.every((id) => outer.includes(id));
-}
-
-function managesVolunteer(
-  actor: Actor,
-  target: { role: Role; teamIds: string[] },
-) {
-  if (actor.role === "admin") return true;
-  return (
-    actor.role === "head" &&
-    target.role === "volunteer" &&
-    target.teamIds.length > 0 &&
-    isSubset(target.teamIds, actor.headOfTeamIds)
-  );
+function isLead(actor: Actor) {
+  return actor.role === "admin" || actor.role === "head";
 }
 
 export function authorize(
@@ -58,29 +48,22 @@ export function authorize(
     case "content.view":
     case "tasks.view":
       return true;
-    case "tasks.edit": {
+    case "tasks.move": {
       if (resource.kind !== "task") return false;
-      if (actor.volunteerId && resource.assigneeIds.includes(actor.volunteerId))
-        return true;
-      if (actor.role === "admin") return true;
-      return (
-        actor.role === "head" && overlaps(resource.teamIds, actor.headOfTeamIds)
-      );
+      if (isLead(actor)) return true;
+      const keys = actorAssigneeKeys(actor);
+      return resource.assigneeIds.some((id) => keys.includes(id));
     }
-    case "tasks.create": {
-      if (actor.role === "admin") return true;
-      if (actor.role !== "head" || resource.kind !== "task") return false;
-      return overlaps(resource.teamIds, actor.headOfTeamIds);
-    }
+    case "tasks.edit":
+    case "tasks.create":
+      return isLead(actor);
     case "users.create":
     case "users.resetPassword":
     case "users.unlock":
-    case "users.deactivate": {
-      if (resource.kind !== "user") return false;
-      return managesVolunteer(actor, resource);
-    }
+    case "users.deactivate":
     case "users.changeRole":
     case "users.rename":
+    case "users.delete":
     case "admin.sync":
     case "admin.audit":
     case "admin.tokens":
@@ -100,6 +83,7 @@ export function authorize(
 export const POLICY_ACTIONS: Action[] = [
   "content.view",
   "tasks.view",
+  "tasks.move",
   "tasks.edit",
   "tasks.create",
   "users.create",
@@ -108,6 +92,7 @@ export const POLICY_ACTIONS: Action[] = [
   "users.deactivate",
   "users.changeRole",
   "users.rename",
+  "users.delete",
   "volunteers.viewContact",
   "resources.viewCore",
   "admin.sync",

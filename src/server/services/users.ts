@@ -1,4 +1,5 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
+import { isRole } from "@/server/domain/roles";
 import type { Actor, Role, Team } from "@/server/domain/types";
 import { ensureMigrated, getDb } from "@/server/db/client";
 import { account, auditLog, loginAttempts, user } from "@/server/db/schema";
@@ -568,6 +569,143 @@ export async function renameAccount(
     after: { name },
   });
   return ok({ name });
+}
+
+/** Full names of active accounts: the people a task can be assigned to. */
+export async function listAssignableNames() {
+  await ensureMigrated();
+  const rows = await getDb()
+    .select({ name: user.name })
+    .from(user)
+    .where(eq(user.banned, false));
+  return rows
+    .map((row) => row.name.trim())
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right, "es"));
+}
+
+async function activeAdminCount() {
+  const rows = await getDb()
+    .select({ total: count() })
+    .from(user)
+    .where(and(eq(user.role, "admin"), eq(user.banned, false)));
+  return rows[0]?.total ?? 0;
+}
+
+export async function changeAccountRole(
+  actor: Actor,
+  userId: string,
+  nextRole: string,
+): Promise<Result<{ role: Role }>> {
+  if (!isRole(nextRole)) return err("validation", "El rol no es válido.");
+  const target = await targetActor(userId);
+  if (!target) return err("not_found", "Usuario no encontrado.");
+  if (
+    !authorize(actor, "users.changeRole", {
+      kind: "user",
+      role: target.role,
+      teamIds: target.teamIds,
+    })
+  ) {
+    return err("forbidden", "No tiene permiso para cambiar roles.");
+  }
+  if (target.userId === actor.userId) {
+    return err("validation", "No puedes cambiar tu propio rol.");
+  }
+  if (target.role === nextRole) return ok({ role: nextRole });
+  if (
+    target.role === "admin" &&
+    !target.banned &&
+    (await activeAdminCount()) <= 1
+  ) {
+    return err("validation", "Debe quedar al menos un Head activo.");
+  }
+  await getDb()
+    .update(user)
+    .set({ role: nextRole, updatedAt: new Date() })
+    .where(eq(user.id, userId));
+  if (target.volunteerId) {
+    try {
+      const repos = repositories();
+      const volunteer = await repos.volunteers.get(target.volunteerId);
+      if (volunteer)
+        await repos.volunteers.upsert({
+          ...volunteer,
+          role: nextRole,
+          updatedAt: new Date().toISOString(),
+        });
+    } catch {
+      // The account role is what the app enforces; Notion catches up later.
+    }
+  }
+  await writeAudit({
+    actorType: "user",
+    actorId: actor.userId,
+    action: "user.change_role",
+    entity: "user",
+    entityId: userId,
+    before: { role: target.role },
+    after: { role: nextRole },
+  });
+  return ok({ role: nextRole });
+}
+
+export async function deleteAccount(
+  actor: Actor,
+  userId: string,
+): Promise<Result<{ username: string }>> {
+  const target = await targetActor(userId);
+  if (!target) return err("not_found", "Usuario no encontrado.");
+  if (
+    !authorize(actor, "users.delete", {
+      kind: "user",
+      role: target.role,
+      teamIds: target.teamIds,
+    })
+  ) {
+    return err("forbidden", "No tiene permiso para eliminar esta cuenta.");
+  }
+  if (target.userId === actor.userId) {
+    return err("validation", "No puedes eliminar tu propia cuenta.");
+  }
+  if (
+    target.role === "admin" &&
+    !target.banned &&
+    (await activeAdminCount()) <= 1
+  ) {
+    return err("validation", "Debe quedar al menos un Head activo.");
+  }
+  if (target.volunteerId) {
+    try {
+      const repos = repositories();
+      const volunteer = await repos.volunteers.get(target.volunteerId);
+      if (volunteer)
+        await repos.volunteers.upsert({
+          ...volunteer,
+          status: "inactive",
+          updatedAt: new Date().toISOString(),
+        });
+    } catch {
+      // The Notion page stays as it is; the account is removed either way.
+    }
+  }
+  const db = getDb();
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(loginAttempts)
+      .where(eq(loginAttempts.userKey, target.username));
+    // Sessions and credentials go with the user through ON DELETE CASCADE.
+    await tx.delete(user).where(eq(user.id, userId));
+  });
+  await writeAudit({
+    actorType: "user",
+    actorId: actor.userId,
+    action: "user.delete",
+    entity: "user",
+    entityId: userId,
+    before: { username: target.username, role: target.role },
+  });
+  return ok({ username: target.username });
 }
 
 export async function deactivateAccount(

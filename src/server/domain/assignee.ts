@@ -1,3 +1,5 @@
+import type { Actor } from "@/server/domain/types";
+
 export function foldName(value: string) {
   return value
     .normalize("NFD")
@@ -14,4 +16,15 @@ export function foldName(value: string) {
  */
 export function assigneeToken(name: string) {
   return `enc:${foldName(name)}`;
+}
+
+/** Every id a task may carry for this account: Notion volunteer, Notion user, Encargado name. */
+export function actorAssigneeKeys(
+  actor: Pick<Actor, "volunteerId" | "notionUserId" | "fullName">,
+) {
+  return [
+    actor.volunteerId,
+    actor.notionUserId,
+    actor.fullName ? assigneeToken(actor.fullName) : null,
+  ].filter((id): id is string => Boolean(id));
 }

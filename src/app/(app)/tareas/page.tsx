@@ -6,7 +6,7 @@ import { formatCostaRica, formatWhen } from "@/lib/dates";
 import { requireActor } from "@/server/auth/request";
 import { assigneeKeys } from "@/server/catalog/focus";
 import { loadCatalog } from "@/server/catalog/load";
-import { canEditTask, dayKey, todayKey, viewOf } from "@/server/catalog/view";
+import { canMoveTask, dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { isArchivedTask } from "@/server/catalog/archive";
 
 export default async function TasksPage({
@@ -132,7 +132,7 @@ export default async function TasksPage({
             team: view.teamName(task.teamIds[0] ?? ""),
             event: view.activityTitle(task.activityIds[0] ?? ""),
             ...(task.priority ? { priority: task.priority } : {}),
-            locked: !canEditTask(actor, task),
+            locked: !canMoveTask(actor, task),
           };
         })}
       />

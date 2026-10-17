@@ -39,6 +39,16 @@ CONFIRM=yes pnpm notion:setup -- --apply
 
 La base Tasks tiene una columna **Encargado** de tipo multi-select (o select). El hub crea ahí una opción con el nombre completo de cada cuenta nueva, y una tarea pertenece a una cuenta cuando el nombre de la opción coincide con el nombre de la cuenta (sin distinguir mayúsculas ni tildes). No hace falta que la persona exista en Notion. Las columnas `Assignee` y `Responsable` se siguen leyendo para las tareas anteriores.
 
+## Roles
+
+En la base los roles se guardan como `admin`, `head` y `volunteer`; en la app se llaman así:
+
+- **Head** (`admin`): administra todo. Usuarios (crear, renombrar, cambiar rol, resetear contraseña, eliminar), eventos, tareas y recursos.
+- **Lead** (`head`): crea, edita y asigna tareas, y las mueve de estado.
+- **Voluntario** (`volunteer`): solo mueve de estado las tareas que tiene asignadas (por hacer, en progreso, bloqueada, hecha).
+
+Un Head no puede cambiar ni eliminar su propia cuenta, y siempre debe quedar al menos un Head activo.
+
 ## Seed de admins
 
 El seed se corre a mano, fuera de CI, y solo si `SEED_USERS` está definido. Imprime cada contraseña temporal una sola vez en esa consola. `pnpm db:migrate`, `pnpm notion:setup` y `pnpm seed:admins` leen `.env` solos.

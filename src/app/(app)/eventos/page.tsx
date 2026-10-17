@@ -45,7 +45,7 @@ export default async function EventsPage({
         <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
           Eventos
         </h1>
-        {actor.role === "admin" || actor.role === "head" ? (
+        {actor.role === "admin" ? (
           <Link
             href="/eventos/nuevo"
             className="bg-accent inline-flex h-12 items-center rounded-full px-5 font-medium text-[#161616]"
