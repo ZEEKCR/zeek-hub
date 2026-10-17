@@ -1,11 +1,20 @@
-import { ArrowUpRight, FileText, Search } from "lucide-react";
+import {
+  ArrowUpRight,
+  ChevronDown,
+  FileText,
+  Plus,
+  Search,
+} from "lucide-react";
+import { ResourceForm } from "@/app/(app)/recursos/resource-form";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { QueryChips } from "@/components/ui/query-chips";
 import { one, searchRecord } from "@/lib/query";
+import { authorize } from "@/server/auth/policy";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
 import { viewOf } from "@/server/catalog/view";
+import { INITIAL_TEAMS } from "@/server/repositories/memory/store";
 
 export default async function ResourcesPage({
   searchParams,
@@ -43,6 +52,29 @@ export default async function ResourcesPage({
         title="Recursos"
         subtitle={`${resources.length} ${resources.length === 1 ? "recurso" : "recursos"} para el equipo: guías, plantillas y listas de verificación.`}
       />
+      {authorize(actor, "resources.create") ? (
+        <details className="panel group">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+            <span className="flex items-center gap-2 text-lg font-semibold">
+              <Plus size={18} aria-hidden />
+              Nuevo recurso
+            </span>
+            <ChevronDown
+              size={18}
+              className="text-muted transition group-open:rotate-180"
+              aria-hidden
+            />
+          </summary>
+          <div className="mt-4">
+            <ResourceForm
+              teams={INITIAL_TEAMS.map((item) => ({
+                id: item.id,
+                name: item.name,
+              }))}
+            />
+          </div>
+        </details>
+      ) : null}
       <div className="panel-flat grid gap-4 p-4">
         <form className="flex gap-2" action="/recursos">
           {type !== "all" ? (

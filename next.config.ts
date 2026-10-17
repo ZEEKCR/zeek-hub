@@ -60,7 +60,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://api.pwnedpasswords.com",
+              "connect-src 'self' https://api.pwnedpasswords.com https://vercel.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

@@ -10,6 +10,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -46,11 +47,17 @@ export function AppShell({
       <aside className="border-line bg-bg fixed top-0 left-0 hidden h-dvh w-[88px] flex-col items-center gap-1 border-r py-4 md:flex">
         <Link
           href="/inicio"
-          className="mb-3 grid place-items-center gap-1 text-sm font-bold tracking-[0.18em]"
+          className="mb-4 grid place-items-center rounded-2xl p-2 transition-opacity hover:opacity-80"
           aria-label="ZEEK"
         >
-          ZEEK
-          <span className="bg-accent h-1 w-6 rounded-full" />
+          <Image
+            src="/brand/zeek-mark.png"
+            alt=""
+            width={182}
+            height={240}
+            priority
+            className="h-10 w-auto"
+          />
         </Link>
         <nav aria-label="Principal" className="grid w-full gap-1 px-2">
           {items.map((item) => {
@@ -114,6 +121,22 @@ export function AppShell({
       </aside>
       <div className="md:pl-[88px]">
         <div className="mx-auto w-full max-w-[1440px] px-4 pt-5 pb-28 md:px-8 md:pt-8 md:pb-10 xl:px-10">
+          <header className="mb-5 md:hidden">
+            <Link
+              href="/inicio"
+              aria-label="ZEEK"
+              className="inline-flex items-center"
+            >
+              <Image
+                src="/brand/zeek-logo.png"
+                alt=""
+                width={960}
+                height={349}
+                priority
+                className="h-9 w-auto"
+              />
+            </Link>
+          </header>
           {children}
         </div>
       </div>
