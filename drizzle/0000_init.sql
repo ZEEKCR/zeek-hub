@@ -184,3 +184,23 @@ CREATE TABLE IF NOT EXISTS "shift_signups" (
 );
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "event_shifts_activity_idx" ON "event_shifts" ("activity_id");
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "user_photos" (
+  "user_id" text PRIMARY KEY,
+  "content_type" text NOT NULL,
+  "data" text NOT NULL,
+  "updated_at" timestamptz NOT NULL
+);
+--> statement-breakpoint
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'user' AND column_name = 'welcome_seen_at'
+  ) THEN
+    ALTER TABLE "user" ADD COLUMN "welcome_seen_at" timestamptz;
+    -- People who already use the hub do not get the first-visit welcome.
+    UPDATE "user" SET "welcome_seen_at" = COALESCE("privacy_accepted_at", now())
+      WHERE "privacy_accepted_at" IS NOT NULL;
+  END IF;
+END $$;

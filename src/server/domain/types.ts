@@ -105,4 +105,6 @@ export type Actor = {
   mustChangePassword: boolean;
   privacyAcceptedAt: string | null;
   tempPasswordExpiresAt: string | null;
+  /** Null until the person finishes or skips the first-visit welcome. */
+  welcomeSeenAt?: string | null;
 };

@@ -14,22 +14,41 @@ function toneFor(name: string) {
   return tones[total % tones.length];
 }
 
-/** The person's department colours the avatar; without one it falls back to a name-based tone. */
+/**
+ * A photo wins when the person uploaded one. Otherwise their department
+ * colours the initials, and without one it falls back to a name-based tone.
+ */
 export function Avatar({
   name,
   size = "md",
   team,
+  photo,
 }: {
   name: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   team?: string | null | undefined;
+  photo?: string | undefined;
 }) {
   const box =
     size === "sm"
       ? "size-6 text-[0.625rem]"
       : size === "lg"
         ? "size-14 text-lg"
-        : "size-9 text-xs";
+        : size === "xl"
+          ? "size-24 text-3xl"
+          : "size-9 text-xs";
+  if (photo) {
+    return (
+      // A small private JPEG served by our own route, so next/image adds nothing.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={photo}
+        alt=""
+        aria-hidden
+        className={`shrink-0 rounded-full object-cover ${box}`}
+      />
+    );
+  }
   const tone = teamTone(team);
   return (
     <span

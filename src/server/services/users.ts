@@ -105,6 +105,7 @@ export async function buildActor(userId: string): Promise<Actor | null> {
     mustChangePassword: row.mustChangePassword,
     privacyAcceptedAt: row.privacyAcceptedAt?.toISOString() ?? null,
     tempPasswordExpiresAt: row.tempPasswordExpiresAt?.toISOString() ?? null,
+    welcomeSeenAt: row.welcomeSeenAt?.toISOString() ?? null,
   };
 }
 
