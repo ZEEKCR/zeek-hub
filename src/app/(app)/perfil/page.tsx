@@ -37,7 +37,7 @@ export default async function ProfilePage() {
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <Panel>
           <div className="flex items-center gap-4">
-            <Avatar name={displayName} size="lg" />
+            <Avatar name={displayName} size="lg" team={account?.teamId} />
             <div className="min-w-0">
               <h2 className="truncate text-2xl font-semibold tracking-tight">
                 {displayName}

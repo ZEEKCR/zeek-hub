@@ -7,6 +7,7 @@ import {
   trashTaskAction,
   type FormState,
 } from "@/app/(app)/tareas/actions";
+import { PeoplePicker } from "@/components/ui/people-picker";
 import { TASK_AREAS } from "@/server/catalog/options";
 import { STATUS_ORDER, STATUS_LABEL } from "@/server/catalog/status";
 import type { TaskStatus } from "@/server/domain/types";
@@ -33,6 +34,7 @@ export function TaskEditor({
   activities,
   people,
   locked,
+  defaultActivityId,
 }: {
   task?: {
     id: string;
@@ -48,6 +50,7 @@ export function TaskEditor({
   activities: { id: string; title: string }[];
   people: string[];
   locked: boolean;
+  defaultActivityId?: string;
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(
     saveTaskAction,
@@ -142,7 +145,7 @@ export function TaskEditor({
           Evento o proyecto
           <select
             name="activityId"
-            defaultValue={task?.activityId ?? ""}
+            defaultValue={task?.activityId ?? defaultActivityId ?? ""}
             disabled={locked}
             className={field}
           >
@@ -154,29 +157,17 @@ export function TaskEditor({
             ))}
           </select>
         </label>
-        <fieldset className="grid gap-2" disabled={locked}>
-          <legend className="field-label mb-2">Encargados</legend>
-          {people.length === 0 ? (
-            <p className="text-muted text-sm">Todavía no hay cuentas.</p>
-          ) : (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {people.map((name) => (
-                <label
-                  key={name}
-                  className="bg-surface-2 border-line flex items-center gap-2.5 rounded-[14px] border px-3.5 py-2.5 text-sm"
-                >
-                  <input
-                    type="checkbox"
-                    name="assignee"
-                    value={name}
-                    defaultChecked={task?.assignees?.includes(name) ?? false}
-                  />
-                  {name}
-                </label>
-              ))}
-            </div>
-          )}
-        </fieldset>
+        {people.length === 0 ? (
+          <p className="text-muted text-sm">Todavía no hay cuentas.</p>
+        ) : (
+          <PeoplePicker
+            name="assignee"
+            label="Encargados"
+            options={people}
+            defaultValue={task?.assignees ?? []}
+            disabled={locked}
+          />
+        )}
         <label className="field-label">
           Notas
           <textarea

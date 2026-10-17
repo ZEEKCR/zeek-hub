@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { initials } from "@/lib/utils";
+import { teamTone } from "@/lib/team-colors";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -28,10 +30,12 @@ const items = [
 export function AppShell({
   children,
   name,
+  teamId,
   admin,
 }: {
   children: ReactNode;
   name: string;
+  teamId: string | null;
   admin: boolean;
 }) {
   const pathname = usePathname();
@@ -112,13 +116,17 @@ export function AppShell({
             title="Perfil"
           >
             <span
-              className={`bg-violet text-on-violet grid size-9 place-items-center rounded-full text-xs font-semibold ${
+              style={{
+                backgroundColor: (teamTone(teamId) ?? { solid: "#6335ED" })
+                  .solid,
+              }}
+              className={`grid size-9 place-items-center rounded-full text-xs font-semibold text-white ${
                 profileActive
                   ? "ring-accent ring-2 ring-offset-2 ring-offset-[var(--bg)]"
                   : ""
               }`}
             >
-              {name.slice(0, 1).toUpperCase()}
+              {initials(name)}
             </span>
             <span className="text-muted group-hover:text-fg">Perfil</span>
           </Link>

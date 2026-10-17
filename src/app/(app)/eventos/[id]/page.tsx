@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ExternalLink,
   MapPin,
+  Plus,
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -141,6 +142,15 @@ export default async function EventDetailPage({
               />
             </summary>
             <div className="mt-4 grid gap-2.5">
+              {actor.role === "admin" || actor.role === "head" ? (
+                <Link
+                  href={`/tareas/nueva?evento=${activity.id}`}
+                  className="btn btn-secondary btn-sm w-fit"
+                >
+                  <Plus size={15} aria-hidden />
+                  Nueva tarea
+                </Link>
+              ) : null}
               {openTasks.map((task) => (
                 <article
                   key={task.id}

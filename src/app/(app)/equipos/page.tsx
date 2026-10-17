@@ -3,6 +3,7 @@ import { AvatarStack } from "@/components/ui/avatar-stack";
 import { EmptyState } from "@/components/ui/empty-state";
 import { NotchedCard } from "@/components/ui/notched-card";
 import { PageHeader } from "@/components/ui/page-header";
+import { teamToneOrFallback } from "@/lib/team-colors";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
 import { listTeamAccounts } from "@/server/services/users";
@@ -31,13 +32,21 @@ export default async function TeamsPage() {
               actionLabel={`Abrir ${team.name}`}
               href={`/equipos/${team.id}`}
             >
-              <h2 className="text-xl font-semibold">{team.name}</h2>
+              <h2 className="flex items-center gap-2.5 text-xl font-semibold">
+                <span
+                  aria-hidden
+                  className="size-3 shrink-0 rounded-full"
+                  style={{
+                    background: `linear-gradient(135deg, ${teamToneOrFallback(team.id).solid}, ${teamToneOrFallback(team.id).soft})`,
+                  }}
+                />
+                {team.name}
+              </h2>
               <div className="mt-4 min-h-8">
                 {members.length > 0 ? (
                   <AvatarStack
-                    names={members.map(
-                      (member) => member.displayUsername || member.name,
-                    )}
+                    names={members.map((member) => member.name)}
+                    teams={members.map(() => team.id)}
                   />
                 ) : (
                   <p className="text-sm opacity-60">Sin cuentas todavía</p>
