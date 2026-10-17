@@ -1,29 +1,13 @@
-import Image from "next/image";
 import { ChangePasswordForm } from "@/app/(public)/cambiar-contrasena/change-password-form";
+import { AuthShell } from "@/components/layout/auth-shell";
 
 export default function ChangePasswordPage() {
   return (
-    <main className="grid min-h-dvh place-items-center bg-[#161616] px-4">
-      <div className="bg-surface-1 border-line shadow-float relative w-full max-w-md overflow-hidden rounded-[32px] border p-6 sm:p-8">
-        <div className="pointer-events-none absolute -top-16 -right-10 h-40 w-40 rounded-full bg-[radial-gradient(circle,#6335ED,#01E576_80%,transparent_70%)] opacity-70" />
-        <Image
-          src="/brand/zeek-logo.png"
-          alt="ZEEK"
-          width={960}
-          height={349}
-          priority
-          className="h-10 w-auto"
-        />
-        <h1 className="mt-6 text-4xl font-semibold tracking-tight">
-          Cambiar contraseña
-        </h1>
-        <p className="text-muted mt-3 text-sm">
-          Se requiere cambiar la contraseña.
-        </p>
-        <div className="mt-8">
-          <ChangePasswordForm />
-        </div>
-      </div>
-    </main>
+    <AuthShell
+      title="Cambiar contraseña"
+      subtitle="Se requiere cambiar la contraseña."
+    >
+      <ChangePasswordForm />
+    </AuthShell>
   );
 }
