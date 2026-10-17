@@ -52,9 +52,7 @@ export default async function EventDetailPage({
   const attendance = isProject(activity)
     ? null
     : await loadAttendance(actor, activity.id);
-  const names = activity.volunteerIds.map((volunteerId) =>
-    view.personName(volunteerId),
-  );
+  const names = view.knownNames(activity.volunteerIds);
 
   return (
     <div className="grid gap-6">
@@ -163,7 +161,9 @@ export default async function EventDetailPage({
                   className="bg-surface-2 flex items-center gap-3 rounded-[16px] px-3.5 py-3"
                 >
                   <Avatar
-                    name={view.personName(task.assigneeIds[0] ?? "") || "Z"}
+                    name={
+                      view.knownNames(task.assigneeIds.slice(0, 1))[0] ?? "Z"
+                    }
                     size="sm"
                   />
                   <div className="min-w-0 flex-1">
