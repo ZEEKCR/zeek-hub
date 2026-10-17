@@ -9,6 +9,8 @@ export type TicketData = {
   username: string;
   department: string;
   jobTitle?: string;
+  /** Small line above the name; defaults to the welcome line. */
+  kicker?: string;
   password: string;
   loginUrl: string;
 };
@@ -142,7 +144,7 @@ export async function renderTicket(
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "#8a8a99";
   ctx.font = `600 28px ${family}`;
-  ctx.fillText("Welcome to ZEEK", left, y + 22);
+  ctx.fillText(data.kicker ?? "Welcome to ZEEK", left, y + 22);
   y += 40;
   ctx.fillStyle = "#0b0b0b";
   fit(ctx, data.name, right - left, 68, 700, family);
