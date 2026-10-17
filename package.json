@@ -15,7 +15,7 @@
     "db:migrate": "node --env-file=.env --import tsx scripts/migrate.ts",
     "seed:admins": "node --env-file=.env --import tsx scripts/seed-admins.ts",
     "notion:setup": "node --env-file=.env --import tsx scripts/notion-setup.ts",
-    "notion:check": "tsx scripts/notion-check.ts",
+    "notion:check": "node --env-file=.env --import tsx scripts/notion-check.mts",
     "prepare": "husky"
   },
   "engines": {
