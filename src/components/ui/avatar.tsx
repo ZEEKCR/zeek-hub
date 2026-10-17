@@ -1,3 +1,4 @@
+import { teamTone } from "@/lib/team-colors";
 import { initials } from "@/lib/utils";
 
 const tones = [
@@ -13,12 +14,15 @@ function toneFor(name: string) {
   return tones[total % tones.length];
 }
 
+/** The person's department colours the avatar; without one it falls back to a name-based tone. */
 export function Avatar({
   name,
   size = "md",
+  team,
 }: {
   name: string;
   size?: "sm" | "md" | "lg";
+  team?: string | null | undefined;
 }) {
   const box =
     size === "sm"
@@ -26,10 +30,12 @@ export function Avatar({
       : size === "lg"
         ? "size-14 text-lg"
         : "size-9 text-xs";
+  const tone = teamTone(team);
   return (
     <span
       aria-hidden
-      className={`grid shrink-0 place-items-center rounded-full font-semibold ${box} ${toneFor(name)}`}
+      className={`grid shrink-0 place-items-center rounded-full font-semibold ${box} ${tone ? "text-white" : toneFor(name)}`}
+      {...(tone ? { style: { backgroundColor: tone.solid } } : {})}
     >
       {initials(name)}
     </span>

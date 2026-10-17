@@ -48,7 +48,7 @@ export default async function AdminUsersPage() {
             return (
               <li key={item.id} className="panel-flat p-4">
                 <div className="flex items-start gap-3">
-                  <Avatar name={item.name} />
+                  <Avatar name={item.name} team={item.teamId} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{item.name}</p>
                     <p className="text-muted truncate text-sm">

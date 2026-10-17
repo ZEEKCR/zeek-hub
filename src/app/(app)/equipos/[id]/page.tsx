@@ -9,6 +9,7 @@ import { publicEmail } from "@/server/auth/credentials";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
 import { canSeeContact } from "@/server/catalog/view";
+import { teamToneOrFallback } from "@/lib/team-colors";
 import { roleLabel } from "@/server/domain/roles";
 import { listTeamAccounts } from "@/server/services/users";
 
@@ -25,6 +26,7 @@ export default async function TeamDetailPage({
   const members = (await listTeamAccounts()).filter(
     (account) => account.teamId === team.id,
   );
+  const tone = teamToneOrFallback(team.id);
   const showContact = canSeeContact(actor, [team.id]);
   const tasks = catalog.tasks.filter((task) => task.teamIds.includes(team.id));
 
@@ -37,6 +39,13 @@ export default async function TeamDetailPage({
         <ArrowLeft size={16} aria-hidden />
         Equipos
       </Link>
+      <span
+        aria-hidden
+        className="h-1.5 w-16 rounded-full"
+        style={{
+          background: `linear-gradient(90deg, ${tone.solid}, ${tone.soft})`,
+        }}
+      />
       <PageHeader
         kicker="Equipo"
         title={team.name}
@@ -47,13 +56,13 @@ export default async function TeamDetailPage({
           <div className="grid gap-2.5 sm:grid-cols-2">
             {members.map((member) => {
               const email = showContact ? publicEmail(member.email) : undefined;
-              const name = member.displayUsername || member.name;
+              const name = member.name;
               return (
                 <article
                   key={member.id}
                   className="bg-surface-2 flex items-start gap-3 rounded-[16px] p-3.5"
                 >
-                  <Avatar name={name} />
+                  <Avatar name={name} team={team.id} />
                   <div className="min-w-0">
                     <h3 className="truncate font-semibold">{name}</h3>
                     <p className="text-muted mt-0.5 text-sm">
