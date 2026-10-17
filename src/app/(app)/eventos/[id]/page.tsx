@@ -59,7 +59,7 @@ export default async function EventDetailPage({
         {activity.format ? ` · ${activity.format}` : ""}
       </p>
       <ActivityEditor
-        locked={!canEditActivity(actor, activity)}
+        locked={!canEditActivity(actor)}
         activity={{
           id: activity.id,
           title: activity.title,

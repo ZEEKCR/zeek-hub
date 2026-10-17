@@ -50,12 +50,17 @@ export function canEditTask(actor: Actor, task: Task) {
   });
 }
 
-export function canEditActivity(actor: Actor, activity: Activity) {
-  if (actor.role === "admin") return true;
-  return (
-    actor.role === "head" &&
-    activity.teamIds.some((id) => actor.headOfTeamIds.includes(id))
-  );
+export function canMoveTask(actor: Actor, task: Task) {
+  return authorize(actor, "tasks.move", {
+    kind: "task",
+    assigneeIds: task.assigneeIds,
+    teamIds: task.teamIds,
+  });
+}
+
+/** Events belong to Head only. */
+export function canEditActivity(actor: Actor) {
+  return actor.role === "admin";
 }
 
 export function canSeeContact(actor: Actor, teamIds: string[]) {

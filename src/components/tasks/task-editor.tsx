@@ -29,6 +29,7 @@ const areas: Record<string, string> = {
 export function TaskEditor({
   task,
   activities,
+  people,
   locked,
 }: {
   task?: {
@@ -40,8 +41,10 @@ export function TaskEditor({
     area?: string;
     activityId?: string;
     notes?: string;
+    assignees?: string[];
   };
   activities: { id: string; title: string }[];
+  people: string[];
   locked: boolean;
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(
@@ -146,6 +149,29 @@ export function TaskEditor({
             ))}
           </select>
         </label>
+        <fieldset className="grid gap-2" disabled={locked}>
+          <legend className="text-sm font-medium">Encargados</legend>
+          {people.length === 0 ? (
+            <p className="text-muted text-sm">Todavía no hay cuentas.</p>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {people.map((name) => (
+                <label
+                  key={name}
+                  className="bg-surface-2 flex items-center gap-2 rounded-[14px] px-4 py-3 text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    name="assignee"
+                    value={name}
+                    defaultChecked={task?.assignees?.includes(name) ?? false}
+                  />
+                  {name}
+                </label>
+              ))}
+            </div>
+          )}
+        </fieldset>
         <label className="grid gap-1 text-sm font-medium">
           Notas
           <textarea

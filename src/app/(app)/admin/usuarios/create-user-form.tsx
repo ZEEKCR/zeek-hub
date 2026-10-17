@@ -63,8 +63,8 @@ export function CreateUserForm({
             defaultValue="volunteer"
           >
             <option value="volunteer">Voluntario</option>
-            <option value="head">Líder de equipo</option>
-            <option value="admin">Admin</option>
+            <option value="head">Lead</option>
+            <option value="admin">Head</option>
           </select>
         </>
       ) : (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { authorize, POLICY_ACTIONS } from "@/server/auth/policy";
+import { authorize, POLICY_ACTIONS, type Resource } from "@/server/auth/policy";
 import type { Actor, Role } from "@/server/domain/types";
 
 function actor(role: Role, extra: Partial<Actor> = {}): Actor {
@@ -20,91 +20,80 @@ function actor(role: Role, extra: Partial<Actor> = {}): Actor {
 }
 
 describe("authorization matrix", () => {
-  it("lets every role read tasks and blocks volunteers from editing someone else's task", () => {
+  it("lets every role read tasks, and volunteers only move their own", () => {
+    const own: Resource = {
+      kind: "task",
+      assigneeIds: ["volunteer-vol"],
+      teamIds: ["team-ops"],
+    };
+    const other: Resource = {
+      kind: "task",
+      assigneeIds: ["someone-else"],
+      teamIds: ["team-growth"],
+    };
     for (const role of ["volunteer", "head", "admin"] as const) {
       expect(authorize(actor(role), "tasks.view")).toBe(true);
     }
-    expect(
-      authorize(actor("volunteer"), "tasks.edit", {
-        kind: "task",
-        assigneeIds: ["other"],
-        teamIds: ["team-growth"],
-      }),
-    ).toBe(false);
-    expect(
-      authorize(actor("volunteer"), "tasks.edit", {
-        kind: "task",
-        assigneeIds: ["volunteer-vol"],
-        teamIds: ["team-ops"],
-      }),
-    ).toBe(true);
-    expect(
-      authorize(actor("head"), "tasks.edit", {
-        kind: "task",
-        assigneeIds: ["other"],
-        teamIds: ["team-growth"],
-      }),
-    ).toBe(true);
+    expect(authorize(actor("volunteer"), "tasks.move", own)).toBe(true);
+    expect(authorize(actor("volunteer"), "tasks.move", other)).toBe(false);
+    expect(authorize(actor("head"), "tasks.move", other)).toBe(true);
+    expect(authorize(actor("admin"), "tasks.move", other)).toBe(true);
   });
 
-  it("limits user management to a head's own volunteers", () => {
-    const head = actor("head");
+  it("matches a volunteer to a task by the Encargado name", () => {
+    const volunteer = actor("volunteer", {
+      volunteerId: null,
+      fullName: "Abdiel Cole",
+    });
     expect(
-      authorize(head, "users.create", {
-        kind: "user",
-        role: "volunteer",
-        teamIds: ["team-growth"],
-      }),
-    ).toBe(true);
-    expect(
-      authorize(head, "users.create", {
-        kind: "user",
-        role: "volunteer",
-        teamIds: ["team-logistics"],
-      }),
-    ).toBe(false);
-    expect(
-      authorize(head, "users.create", {
-        kind: "user",
-        role: "head",
-        teamIds: ["team-growth"],
-      }),
-    ).toBe(false);
-    expect(
-      authorize(head, "users.resetPassword", {
-        kind: "user",
-        role: "admin",
-        teamIds: ["team-growth"],
-      }),
-    ).toBe(false);
-    expect(
-      authorize(actor("admin"), "users.create", {
-        kind: "user",
-        role: "head",
-        teamIds: ["team-logistics"],
-      }),
-    ).toBe(true);
-    expect(
-      authorize(actor("volunteer"), "users.create", {
-        kind: "user",
-        role: "volunteer",
-        teamIds: ["team-growth"],
-      }),
-    ).toBe(false);
-    expect(
-      authorize(head, "users.deactivate", {
-        kind: "user",
-        role: "volunteer",
-        teamIds: [],
-      }),
-    ).toBe(false);
-    expect(
-      authorize(actor("admin"), "users.deactivate", {
-        kind: "user",
-        role: "volunteer",
+      authorize(volunteer, "tasks.move", {
+        kind: "task",
+        assigneeIds: ["enc:abdiel cole"],
         teamIds: [],
       }),
     ).toBe(true);
+    expect(
+      authorize(volunteer, "tasks.move", {
+        kind: "task",
+        assigneeIds: ["enc:otra persona"],
+        teamIds: [],
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps editing and creating tasks to Lead and Head", () => {
+    const task: Resource = {
+      kind: "task",
+      assigneeIds: ["volunteer-vol"],
+      teamIds: ["team-ops"],
+    };
+    expect(authorize(actor("volunteer"), "tasks.edit", task)).toBe(false);
+    expect(authorize(actor("volunteer"), "tasks.create", task)).toBe(false);
+    for (const role of ["head", "admin"] as const) {
+      expect(authorize(actor(role), "tasks.edit", task)).toBe(true);
+      expect(authorize(actor(role), "tasks.create", task)).toBe(true);
+    }
+  });
+
+  it("limits user management to Head", () => {
+    const target: Resource = {
+      kind: "user",
+      role: "volunteer",
+      teamIds: ["team-growth"],
+    };
+    for (const action of [
+      "users.create",
+      "users.resetPassword",
+      "users.unlock",
+      "users.deactivate",
+      "users.changeRole",
+      "users.rename",
+      "users.delete",
+    ] as const) {
+      expect(authorize(actor("admin"), action, target)).toBe(true);
+      expect(authorize(actor("head"), action, target)).toBe(false);
+      expect(authorize(actor("volunteer"), action, target)).toBe(false);
+    }
   });
 
   it("covers every action for the three roles", () => {

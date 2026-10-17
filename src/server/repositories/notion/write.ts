@@ -22,6 +22,8 @@ export type TaskWrite = {
   area?: string;
   activityId?: string;
   notes?: string;
+  /** Encargado option names; undefined leaves the column untouched. */
+  assignees?: string[];
 };
 
 export type ActivityWrite = {
@@ -64,6 +66,11 @@ export function taskProperties(
     [names.notes]: richText(input.notes ?? ""),
   };
   if (options?.preserveDue) delete properties[names.due];
+  if (input.assignees) {
+    properties[names.encargado] = {
+      multi_select: input.assignees.map((name) => ({ name })),
+    };
+  }
   return properties;
 }
 

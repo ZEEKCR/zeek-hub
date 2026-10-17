@@ -3,13 +3,8 @@ import { publicEmail } from "@/server/auth/credentials";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
 import { canSeeContact } from "@/server/catalog/view";
+import { roleLabel } from "@/server/domain/roles";
 import { listTeamAccounts } from "@/server/services/users";
-
-function roleLabel(role: string) {
-  if (role === "admin") return "Admin";
-  if (role === "head") return "Líder";
-  return "Voluntario";
-}
 
 export default async function TeamDetailPage({
   params,

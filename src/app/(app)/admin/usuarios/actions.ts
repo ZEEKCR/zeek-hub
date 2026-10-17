@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { requireActor } from "@/server/auth/request";
 import {
   createUserAs,
+  changeAccountRole,
   deactivateAccount,
+  deleteAccount,
   renameAccount,
   resetUserPassword,
   unlockAccount,
@@ -35,14 +37,8 @@ export async function createUserAction(
   const result = await createUserAs(actor, {
     username: String(formData.get("username") ?? ""),
     name: String(formData.get("name") ?? ""),
-    role:
-      actor.role === "head"
-        ? "volunteer"
-        : roleFromForm(formData.get("role"), "volunteer"),
-    primaryTeamId:
-      actor.role === "head"
-        ? (actor.headOfTeamIds[0] ?? "")
-        : String(formData.get("teamId") ?? ""),
+    role: roleFromForm(formData.get("role"), "volunteer"),
+    primaryTeamId: String(formData.get("teamId") ?? ""),
     ...(secondary.length > 0 ? { secondaryTeamIds: secondary } : {}),
     ...(String(formData.get("email") ?? "").trim()
       ? { email: String(formData.get("email")) }
@@ -77,6 +73,41 @@ export async function renameUserAction(
   revalidatePath("/admin/usuarios");
   revalidatePath("/inicio");
   return { ok: true, data: { message: "Nombre guardado." } };
+}
+
+export async function changeRoleAction(
+  _state: UserActionState,
+  formData: FormData,
+): Promise<UserActionState> {
+  const actor = await requireActor();
+  const result = await changeAccountRole(
+    actor,
+    String(formData.get("userId") ?? ""),
+    String(formData.get("role") ?? ""),
+  );
+  if (!result.ok) return result;
+  revalidatePath("/admin/usuarios");
+  return { ok: true, data: { message: "Rol guardado." } };
+}
+
+export async function deleteUserAction(
+  _state: UserActionState,
+  formData: FormData,
+): Promise<UserActionState> {
+  const actor = await requireActor();
+  if (formData.get("confirm") !== "yes") {
+    return err("validation", "Marca la casilla para confirmar.");
+  }
+  const result = await deleteAccount(
+    actor,
+    String(formData.get("userId") ?? ""),
+  );
+  if (!result.ok) return result;
+  revalidatePath("/admin/usuarios");
+  return {
+    ok: true,
+    data: { message: `Usuario ${result.data.username} eliminado.` },
+  };
 }
 
 export async function resetPasswordAction(formData: FormData) {

@@ -7,7 +7,7 @@ import { requireActor } from "@/server/auth/request";
 import { authorize } from "@/server/auth/policy";
 import { TASK_AREAS } from "@/server/catalog/options";
 import { invalidateCatalog, loadCatalog } from "@/server/catalog/load";
-import { canEditTask, dayKey } from "@/server/catalog/view";
+import { canEditTask, canMoveTask, dayKey } from "@/server/catalog/view";
 import type { Priority, TaskStatus } from "@/server/domain/types";
 import { teamIdForArea } from "@/server/repositories/notion/mappers";
 import { updateTaskStatus } from "@/server/repositories/notion/repos";
@@ -53,6 +53,14 @@ function readTask(formData: FormData): TaskWrite | FormState {
   const area = clean(formData.get("area"));
   const activityId = clean(formData.get("activityId"));
   const notes = clean(formData.get("notes"));
+  const assignees = [
+    ...new Set(
+      formData
+        .getAll("assignee")
+        .map((value) => clean(value))
+        .filter(Boolean),
+    ),
+  ];
   if (!title || title.length > 200) {
     return { ok: false, message: "Escribe un título de hasta 200 caracteres." };
   }
@@ -71,6 +79,9 @@ function readTask(formData: FormData): TaskWrite | FormState {
   if (notes.length > 2000) {
     return { ok: false, message: "Las notas son demasiado largas." };
   }
+  if (assignees.length > 20 || assignees.some((name) => name.length > 80)) {
+    return { ok: false, message: "La lista de encargados no es válida." };
+  }
   return {
     title,
     status,
@@ -79,6 +90,7 @@ function readTask(formData: FormData): TaskWrite | FormState {
     ...(area ? { area } : {}),
     ...(activityId ? { activityId } : {}),
     ...(notes ? { notes } : {}),
+    assignees,
   };
 }
 
@@ -98,7 +110,7 @@ export async function moveTaskAction(
   if (!task) {
     return { ok: false, message: "No se encontró la tarea." };
   }
-  if (!canEditTask(actor, task)) {
+  if (!canMoveTask(actor, task)) {
     return { ok: false, message: "No se puede cambiar esta tarea." };
   }
   try {

@@ -8,10 +8,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (actor.mustChangePassword) redirect("/cambiar-contrasena");
   if (!actor.privacyAcceptedAt) redirect("/privacidad");
   return (
-    <AppShell
-      name={actor.displayName}
-      admin={actor.role === "admin" || actor.role === "head"}
-    >
+    <AppShell name={actor.displayName} admin={actor.role === "admin"}>
       {children}
     </AppShell>
   );

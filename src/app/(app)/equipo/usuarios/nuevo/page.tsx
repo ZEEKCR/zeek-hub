@@ -4,6 +4,9 @@ import { listDirectory } from "@/server/services/users";
 
 export default async function NewTeamUserPage() {
   const actor = await requireActor();
+  if (actor.role !== "admin") {
+    return <p>No tiene permiso para ver esta pantalla.</p>;
+  }
   const directory = await listDirectory(actor);
   return (
     <div className="mx-auto max-w-xl">
@@ -13,7 +16,7 @@ export default async function NewTeamUserPage() {
           id: team.id,
           name: team.name,
         }))}
-        allowRole={actor.role === "admin"}
+        allowRole
       />
     </div>
   );

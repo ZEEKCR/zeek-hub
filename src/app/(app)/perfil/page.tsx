@@ -5,6 +5,7 @@ import { formatCostaRica } from "@/lib/dates";
 import { sessionDevice } from "@/lib/session-device";
 import { readyAuth } from "@/server/auth/config";
 import { requireActor } from "@/server/auth/request";
+import { roleLabel } from "@/server/domain/roles";
 
 export default async function ProfilePage() {
   const actor = await requireActor();
@@ -30,7 +31,7 @@ export default async function ProfilePage() {
           {actor.fullName || actor.displayName}
         </p>
         <p className="text-muted mt-2">@{actor.username}</p>
-        <p className="mt-4 text-sm">Rol: {actor.role}</p>
+        <p className="mt-4 text-sm">Rol: {roleLabel(actor.role)}</p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Link
             href="/cambiar-contrasena"
