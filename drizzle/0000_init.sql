@@ -137,3 +137,18 @@ ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "team_id" text;
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "job_title" text;
 --> statement-breakpoint
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "phone" text;
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "reports" (
+  "id" text PRIMARY KEY,
+  "created_at" timestamptz NOT NULL,
+  "user_id" text,
+  "reporter_name" text NOT NULL,
+  "kind" text NOT NULL,
+  "subject" text NOT NULL,
+  "message" text NOT NULL,
+  "screen" text,
+  "user_agent" text,
+  "status" text NOT NULL DEFAULT 'open',
+  "resolved_at" timestamptz,
+  "resolved_by" text
+);

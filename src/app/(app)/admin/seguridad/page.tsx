@@ -1,6 +1,8 @@
 import { ShieldOff } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { desc, inArray } from "drizzle-orm";
+import { AdminTabs } from "@/components/layout/admin-tabs";
+import { countOpenReports } from "@/server/services/reports";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { formatCostaRica } from "@/lib/dates";
@@ -43,6 +45,10 @@ export default async function SecurityPage() {
       <PageHeader
         title="Seguridad"
         subtitle="Bloqueos de acceso y los últimos eventos de auditoría."
+      />
+      <AdminTabs
+        active="seguridad"
+        openReports={await countOpenReports(actor)}
       />
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <Panel title="Bloqueos">

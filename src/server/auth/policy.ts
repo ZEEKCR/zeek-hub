@@ -18,6 +18,8 @@ export type Action =
   | "volunteers.viewContact"
   | "resources.viewCore"
   | "resources.create"
+  | "reports.create"
+  | "reports.manage"
   | "admin.sync"
   | "admin.audit"
   | "admin.tokens";
@@ -80,6 +82,10 @@ export function authorize(
       return actor.role === "head" || actor.role === "admin";
     case "resources.create":
       return actor.role === "admin";
+    case "reports.create":
+      return true;
+    case "reports.manage":
+      return actor.role === "admin";
     default:
       return false;
   }
@@ -102,6 +108,8 @@ export const POLICY_ACTIONS: Action[] = [
   "volunteers.viewContact",
   "resources.viewCore",
   "resources.create",
+  "reports.create",
+  "reports.manage",
   "admin.sync",
   "admin.audit",
   "admin.tokens",

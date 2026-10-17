@@ -68,5 +68,6 @@ export const LIMITS = {
   loginIp: { max: 30, windowMs: 60 * 60_000 },
   credentialChange: { max: 10, windowMs: 60 * 60_000 },
   write: { max: 30, windowMs: 60_000 },
+  report: { max: 5, windowMs: 60 * 60_000 },
   webhook: { max: 120, windowMs: 60_000 },
 } as const;

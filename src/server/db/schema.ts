@@ -166,3 +166,21 @@ export const syncState = pgTable("sync_state", {
 });
 
 export const authSchema = { user, session, account, verification };
+
+export const reports = pgTable("reports", {
+  id: text("id").primaryKey(),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+  userId: text("user_id"),
+  reporterName: text("reporter_name").notNull(),
+  kind: text("kind").notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  screen: text("screen"),
+  userAgent: text("user_agent"),
+  status: text("status").notNull().default("open"),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true, mode: "date" }),
+  resolvedBy: text("resolved_by"),
+});
