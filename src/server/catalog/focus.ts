@@ -28,3 +28,10 @@ export function isTodayOrOverdue(task: Task, today: string) {
   if (day === today) return true;
   return day < today && task.status !== "done";
 }
+
+/** True when the due day is before today, whatever the status. */
+export function isPastDue(task: Task, today: string) {
+  const start = task.dueDate?.start;
+  if (!start) return false;
+  return dayKey(start) < today;
+}
