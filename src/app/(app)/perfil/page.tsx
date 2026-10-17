@@ -1,8 +1,14 @@
-import { ChevronRight, LifeBuoy } from "lucide-react";
+import {
+  ChevronRight,
+  ExternalLink,
+  LifeBuoy,
+  MessageCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
+import { DISCORD_INVITE } from "@/lib/links";
 import { InstallApp } from "@/components/pwa/install-app";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PageHeader } from "@/components/ui/page-header";
@@ -86,11 +92,30 @@ export default async function ProfilePage() {
         <div className="grid gap-6">
           <Panel
             title="Preferencias"
-            description="Cómo se ve ZEEK Hub y dónde pedir ayuda."
+            description="Cómo se ve ZEEK Hub, la comunidad y dónde pedir ayuda."
           >
             <div className="grid gap-2.5">
               <ThemeToggle variant="row" />
               <InstallApp />
+              <a
+                href={DISCORD_INVITE}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-surface-2 hover:bg-surface-3 flex items-center gap-3 rounded-[16px] px-4 py-3 transition-colors"
+              >
+                <span className="bg-surface-1 grid size-9 shrink-0 place-items-center rounded-full">
+                  <MessageCircle size={17} strokeWidth={1.75} aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold">
+                    Unirme al Discord de ZEEK
+                  </span>
+                  <span className="text-muted text-xs">
+                    La comunidad del equipo. Se abre en otra pestaña.
+                  </span>
+                </span>
+                <ExternalLink size={16} className="text-muted" aria-hidden />
+              </a>
               <Link
                 href="/ayuda"
                 className="bg-surface-2 hover:bg-surface-3 flex items-center gap-3 rounded-[16px] px-4 py-3 transition-colors"
