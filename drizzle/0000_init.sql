@@ -138,6 +138,10 @@ ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "job_title" text;
 --> statement-breakpoint
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "phone" text;
 --> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "birth_month" integer;
+--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "birth_day" integer;
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "reports" (
   "id" text PRIMARY KEY,
   "created_at" timestamptz NOT NULL,

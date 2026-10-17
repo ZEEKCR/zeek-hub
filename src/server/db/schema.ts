@@ -40,6 +40,8 @@ export const user = pgTable("user", {
   teamId: text("team_id"),
   jobTitle: text("job_title"),
   phone: text("phone"),
+  birthMonth: integer("birth_month"),
+  birthDay: integer("birth_day"),
   createdBy: text("created_by"),
   privacyAcceptedAt: timestamp("privacy_accepted_at", {
     withTimezone: true,

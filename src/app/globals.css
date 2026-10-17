@@ -111,6 +111,39 @@ body {
   font-family: var(--font-urbanist), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Soft colour wash behind the app, fixed so content scrolls over it. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60rem 40rem at 105% -10%,
+      color-mix(in srgb, var(--violet) 22%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      50rem 36rem at -10% 110%,
+      color-mix(in srgb, var(--accent) 16%, transparent),
+      transparent 60%
+    );
+}
+.light body::before {
+  background:
+    radial-gradient(
+      60rem 40rem at 105% -10%,
+      color-mix(in srgb, var(--violet) 14%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      50rem 36rem at -10% 110%,
+      color-mix(in srgb, var(--accent) 16%, transparent),
+      transparent 60%
+    );
+}
+
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
@@ -119,7 +152,8 @@ body {
 @layer components {
   /* Surfaces */
   .panel {
-    background: var(--surface-1);
+    background: color-mix(in srgb, var(--surface-1) 88%, transparent);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--border);
     border-radius: 24px;
     padding: 1.25rem;
@@ -190,12 +224,17 @@ body {
     opacity: 0.55;
     cursor: not-allowed;
   }
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
   .btn-primary {
-    background: var(--accent);
+    background: linear-gradient(135deg, #01e576 0%, #8bf0b6 100%);
     color: var(--on-accent);
+    box-shadow: 0 6px 20px rgb(1 229 118 / 0.22);
   }
   .btn-primary:hover:not(:disabled) {
-    filter: brightness(1.06);
+    filter: brightness(1.05);
+    box-shadow: 0 8px 26px rgb(1 229 118 / 0.32);
   }
   .btn-secondary {
     background: var(--surface-2);
@@ -259,12 +298,74 @@ body {
     border-color: color-mix(in srgb, var(--info) 40%, transparent);
   }
 
+  /* Motion: short, soft, and off for people who ask for less. */
+  .rise {
+    animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .pop {
+    animation: pop 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+    transform-origin: bottom center;
+  }
+  .float {
+    animation: float 3.2s ease-in-out infinite;
+  }
+  .page-enter > * > * {
+    animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .page-enter > * > *:nth-child(2) {
+    animation-delay: 50ms;
+  }
+  .page-enter > * > *:nth-child(3) {
+    animation-delay: 100ms;
+  }
+  .page-enter > * > *:nth-child(4) {
+    animation-delay: 150ms;
+  }
+  .page-enter > * > *:nth-child(n + 5) {
+    animation-delay: 200ms;
+  }
+  .panel,
+  .panel-flat {
+    transition:
+      box-shadow 0.25s ease,
+      border-color 0.25s ease;
+  }
+  .panel:hover {
+    border-color: color-mix(in srgb, var(--violet) 30%, var(--border));
+  }
+
   .eyebrow {
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-muted);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes float {
+  50% {
+    transform: translateY(-4px);
   }
 }
 

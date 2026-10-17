@@ -1,8 +1,9 @@
-import { Monitor } from "lucide-react";
+import { ChevronRight, LifeBuoy, Monitor } from "lucide-react";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { formatCostaRica } from "@/lib/dates";
@@ -15,6 +16,8 @@ import { ensureMigrated, getDb } from "@/server/db/client";
 import { user } from "@/server/db/schema";
 import { INITIAL_TEAMS } from "@/server/repositories/memory/store";
 import { roleLabel } from "@/server/domain/roles";
+import { getOwnBirthday } from "@/server/services/birthdays";
+import { BirthdayForm } from "@/app/(app)/perfil/birthday-form";
 
 export default async function ProfilePage() {
   const actor = await requireActor();
@@ -38,6 +41,7 @@ export default async function ProfilePage() {
       devices.set(label, item);
     }
   }
+  const birthday = await getOwnBirthday(actor);
   const displayName = actor.fullName || actor.displayName;
   return (
     <div className="grid gap-6">
@@ -93,36 +97,70 @@ export default async function ProfilePage() {
             </form>
           </div>
         </Panel>
-        <Panel
-          title="Sesiones activas"
-          description="Los dispositivos con tu cuenta abierta."
-        >
-          <ul className="grid gap-2.5">
-            {[...devices.entries()].map(([label, item]) => (
-              <li
-                key={label}
-                className="bg-surface-2 flex items-center gap-3 rounded-[16px] px-4 py-3 text-sm"
+        <div className="grid gap-6">
+          <Panel
+            title="Preferencias"
+            description="Cómo se ve ZEEK Hub y dónde pedir ayuda."
+          >
+            <div className="grid gap-2.5">
+              <ThemeToggle variant="row" />
+              <Link
+                href="/ayuda"
+                className="bg-surface-2 hover:bg-surface-3 flex items-center gap-3 rounded-[16px] px-4 py-3 transition-colors"
               >
-                <Monitor
-                  size={18}
-                  className="text-muted shrink-0"
-                  aria-hidden
-                />
-                <span className="min-w-0">
-                  <span className="block font-semibold">{label}</span>
-                  <span className="text-muted">
-                    Vence {formatCostaRica(item.expiresAt, "d MMM yyyy, HH:mm")}
+                <span className="bg-surface-1 grid size-9 shrink-0 place-items-center rounded-full">
+                  <LifeBuoy size={17} strokeWidth={1.75} aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold">
+                    Ayuda y reportes
+                  </span>
+                  <span className="text-muted text-xs">
+                    Preguntas frecuentes y reportar un problema.
                   </span>
                 </span>
-              </li>
-            ))}
-          </ul>
-          <form action={revokeOthers} className="mt-4">
-            <button type="submit" className="btn btn-secondary">
-              Cerrar las demás
-            </button>
-          </form>
-        </Panel>
+                <ChevronRight size={16} className="text-muted" aria-hidden />
+              </Link>
+            </div>
+          </Panel>
+          <Panel
+            title="Mi cumpleaños"
+            description="Para que el equipo te felicite."
+          >
+            <BirthdayForm current={birthday} />
+          </Panel>
+          <Panel
+            title="Sesiones activas"
+            description="Los dispositivos con tu cuenta abierta."
+          >
+            <ul className="grid gap-2.5">
+              {[...devices.entries()].map(([label, item]) => (
+                <li
+                  key={label}
+                  className="bg-surface-2 flex items-center gap-3 rounded-[16px] px-4 py-3 text-sm"
+                >
+                  <Monitor
+                    size={18}
+                    className="text-muted shrink-0"
+                    aria-hidden
+                  />
+                  <span className="min-w-0">
+                    <span className="block font-semibold">{label}</span>
+                    <span className="text-muted">
+                      Vence{" "}
+                      {formatCostaRica(item.expiresAt, "d MMM yyyy, HH:mm")}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <form action={revokeOthers} className="mt-4">
+              <button type="submit" className="btn btn-secondary">
+                Cerrar las demás
+              </button>
+            </form>
+          </Panel>
+        </div>
       </div>
     </div>
   );

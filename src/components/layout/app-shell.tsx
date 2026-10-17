@@ -5,7 +5,6 @@ import {
   Home,
   KanbanSquare,
   Library,
-  LifeBuoy,
   Menu,
   Settings,
   Sparkles,
@@ -14,7 +13,6 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { BrandLogo } from "@/components/ui/brand-logo";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
@@ -39,16 +37,17 @@ export function AppShell({
   const pathname = usePathname();
   const mobile = items.slice(0, 4);
   const [moreOpen, setMoreOpen] = useState(false);
+  const profileActive =
+    pathname.startsWith("/perfil") || pathname.startsWith("/ayuda");
   const more = [
     { href: "/equipos", label: "Equipos" },
     { href: "/recursos", label: "Recursos" },
-    { href: "/ayuda", label: "Ayuda" },
     { href: "/perfil", label: "Perfil" },
     ...(admin ? [{ href: "/admin/usuarios", label: "Admin" }] : []),
   ];
   return (
     <div className="bg-bg text-fg min-h-dvh">
-      <aside className="border-line bg-bg fixed top-0 left-0 hidden h-dvh w-[88px] flex-col items-center gap-1 border-r py-4 md:flex">
+      <aside className="border-line bg-bg/70 fixed top-0 left-0 z-10 hidden h-dvh w-[88px] flex-col items-center gap-1 border-r py-4 backdrop-blur-xl md:flex">
         <Link
           href="/inicio"
           className="mb-4 grid place-items-center rounded-2xl p-2 transition-opacity hover:opacity-80"
@@ -76,7 +75,7 @@ export function AppShell({
                 title={item.label}
                 className={`group grid justify-items-center gap-1 rounded-2xl px-1 py-2 text-[0.6875rem] font-semibold transition-colors ${
                   active
-                    ? "bg-inverse text-bg"
+                    ? "bg-inverse text-bg shadow-[var(--shadow-card)]"
                     : "text-muted hover:bg-surface-2 hover:text-fg"
                 }`}
               >
@@ -87,21 +86,6 @@ export function AppShell({
           })}
         </nav>
         <div className="mt-auto grid w-full gap-1 px-2">
-          <ThemeToggle />
-          <Link
-            href="/ayuda"
-            aria-label="Ayuda"
-            aria-current={pathname.startsWith("/ayuda") ? "page" : undefined}
-            title="Ayuda"
-            className={`grid justify-items-center gap-1 rounded-2xl px-1 py-2 text-[0.6875rem] font-semibold transition-colors ${
-              pathname.startsWith("/ayuda")
-                ? "bg-inverse text-bg"
-                : "text-muted hover:bg-surface-2 hover:text-fg"
-            }`}
-          >
-            <LifeBuoy size={18} strokeWidth={1.75} />
-            Ayuda
-          </Link>
           {admin ? (
             <Link
               href="/admin/usuarios"
@@ -122,12 +106,12 @@ export function AppShell({
             href="/perfil"
             className="group grid justify-items-center gap-1 rounded-2xl px-1 py-2 text-[0.6875rem] font-semibold"
             aria-label={name}
-            aria-current={pathname.startsWith("/perfil") ? "page" : undefined}
+            aria-current={profileActive ? "page" : undefined}
             title="Perfil"
           >
             <span
               className={`bg-violet text-on-violet grid size-9 place-items-center rounded-full text-xs font-semibold ${
-                pathname.startsWith("/perfil")
+                profileActive
                   ? "ring-accent ring-2 ring-offset-2 ring-offset-[var(--bg)]"
                   : ""
               }`}
@@ -154,24 +138,31 @@ export function AppShell({
       </div>
       <nav
         aria-label="Principal móvil"
-        className="border-line bg-bg/95 fixed inset-x-0 bottom-0 z-20 flex justify-around border-t px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden"
+        className="border-line bg-bg/80 fixed inset-x-0 bottom-0 z-20 flex justify-around border-t px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-xl md:hidden"
       >
         {moreOpen ? (
-          <div className="bg-surface-1 border-line absolute inset-x-3 bottom-[calc(100%+0.5rem)] grid gap-1 rounded-[24px] border p-2 shadow-[var(--shadow-float)]">
-            <ThemeToggle variant="menu" />
-            {more.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`hover:bg-surface-2 min-h-11 rounded-full px-4 py-3 text-sm font-medium ${
-                  pathname.startsWith(item.href) ? "bg-surface-2" : ""
-                }`}
-                onClick={() => setMoreOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
+          <>
+            <button
+              type="button"
+              aria-label="Cerrar menú"
+              className="fixed inset-0 -z-10 cursor-default"
+              onClick={() => setMoreOpen(false)}
+            />
+            <div className="pop bg-surface-1 border-line absolute inset-x-3 bottom-[calc(100%+0.5rem)] grid gap-1 rounded-[24px] border p-2 shadow-[var(--shadow-float)]">
+              {more.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`hover:bg-surface-2 min-h-11 rounded-full px-4 py-3 text-sm font-medium ${
+                    pathname.startsWith(item.href) ? "bg-surface-2" : ""
+                  }`}
+                  onClick={() => setMoreOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </>
         ) : null}
         {mobile.map((item) => {
           const Icon = item.icon;
@@ -204,7 +195,8 @@ export function AppShell({
         >
           <span
             className={`grid h-8 w-14 place-items-center rounded-full ${
-              more.some((item) => pathname.startsWith(item.href))
+              more.some((item) => pathname.startsWith(item.href)) ||
+              profileActive
                 ? "bg-accent text-[#161616]"
                 : "text-muted"
             }`}
