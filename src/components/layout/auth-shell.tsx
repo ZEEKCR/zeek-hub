@@ -61,8 +61,8 @@ export function AuthShell({
               priority
               className="h-9 w-auto lg:h-11"
             />
-            <p className="mt-6 max-w-sm text-2xl leading-tight font-semibold tracking-tight text-white lg:mt-10 lg:text-[2.5rem]">
-              Coordina voluntarios, tareas y eventos en un solo lugar.
+            <p className="mt-6 max-w-sm text-2xl leading-tight font-semibold tracking-tight text-balance text-white lg:mt-10 lg:text-[2.5rem]">
+              The Future Is Built Together
             </p>
           </div>
         </aside>
