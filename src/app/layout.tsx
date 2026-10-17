@@ -12,6 +12,8 @@ const urbanist = Urbanist({
   weight: ["400", "500", "600", "700"],
 });
 
+const THEME_SCRIPT = `try{if(localStorage.getItem("zeek-theme")==="light"){var d=document.documentElement;d.classList.remove("dark");d.classList.add("light")}}catch(e){}`;
+
 export const metadata: Metadata = {
   title: "ZEEK Hub",
   description: "Coordinación de voluntarios de ZEEK",
@@ -19,7 +21,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es" className={`${urbanist.variable} dark h-full antialiased`}>
+    <html
+      lang="es"
+      suppressHydrationWarning
+      className={`${urbanist.variable} dark h-full antialiased`}
+    >
+      <head>
+        <script
+          // Applies the saved theme before the first paint to avoid a flash.
+          dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }}
+        />
+      </head>
       <body className="min-h-full">
         <NextIntlClientProvider locale="es" messages={messages}>
           {children}

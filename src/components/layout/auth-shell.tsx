@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import type { ReactNode } from "react";
 
 const BARS = [
@@ -66,7 +67,10 @@ export function AuthShell({
             </p>
           </div>
         </aside>
-        <section className="flex flex-col justify-center px-3 py-6 sm:px-8 lg:px-6">
+        <section className="relative flex flex-col justify-center px-3 py-6 sm:px-8 lg:px-6">
+          <div className="absolute top-2 right-2 lg:top-0 lg:right-0">
+            <ThemeToggle variant="icon" />
+          </div>
           <div className="mx-auto w-full max-w-sm">
             <Image
               src="/brand/zeek-mark.png"

@@ -19,7 +19,7 @@ export function KpiStat({
         <p
           className={`mt-2.5 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
             direction === "down"
-              ? "bg-danger/15 text-danger"
+              ? "bg-danger/15 text-[var(--danger-text)]"
               : "bg-accent text-[#161616]"
           }`}
         >

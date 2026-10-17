@@ -1,6 +1,8 @@
 import { ShieldOff } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ChevronDown } from "lucide-react";
+import { AdminTabs } from "@/components/layout/admin-tabs";
+import { countOpenReports } from "@/server/services/reports";
 import { Avatar } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/page-header";
 import { CreateUserForm } from "@/app/(app)/admin/usuarios/create-user-form";
@@ -34,6 +36,10 @@ export default async function AdminUsersPage() {
       <PageHeader
         title="Usuarios"
         subtitle={`${users.length} ${users.length === 1 ? "cuenta" : "cuentas"}. Edita nombre, rol y perfil, o crea una cuenta nueva.`}
+      />
+      <AdminTabs
+        active="usuarios"
+        openReports={await countOpenReports(actor)}
       />
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <ul className="grid gap-3">

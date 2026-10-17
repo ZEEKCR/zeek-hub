@@ -5,6 +5,7 @@ import {
   Home,
   KanbanSquare,
   Library,
+  LifeBuoy,
   Menu,
   Settings,
   Sparkles,
@@ -12,6 +13,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { BrandLogo } from "@/components/ui/brand-logo";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
@@ -39,6 +42,7 @@ export function AppShell({
   const more = [
     { href: "/equipos", label: "Equipos" },
     { href: "/recursos", label: "Recursos" },
+    { href: "/ayuda", label: "Ayuda" },
     { href: "/perfil", label: "Perfil" },
     ...(admin ? [{ href: "/admin/usuarios", label: "Admin" }] : []),
   ];
@@ -72,7 +76,7 @@ export function AppShell({
                 title={item.label}
                 className={`group grid justify-items-center gap-1 rounded-2xl px-1 py-2 text-[0.6875rem] font-semibold transition-colors ${
                   active
-                    ? "bg-[#f7f7f7] text-[#161616]"
+                    ? "bg-inverse text-bg"
                     : "text-muted hover:bg-surface-2 hover:text-fg"
                 }`}
               >
@@ -83,6 +87,21 @@ export function AppShell({
           })}
         </nav>
         <div className="mt-auto grid w-full gap-1 px-2">
+          <ThemeToggle />
+          <Link
+            href="/ayuda"
+            aria-label="Ayuda"
+            aria-current={pathname.startsWith("/ayuda") ? "page" : undefined}
+            title="Ayuda"
+            className={`grid justify-items-center gap-1 rounded-2xl px-1 py-2 text-[0.6875rem] font-semibold transition-colors ${
+              pathname.startsWith("/ayuda")
+                ? "bg-inverse text-bg"
+                : "text-muted hover:bg-surface-2 hover:text-fg"
+            }`}
+          >
+            <LifeBuoy size={18} strokeWidth={1.75} />
+            Ayuda
+          </Link>
           {admin ? (
             <Link
               href="/admin/usuarios"
@@ -91,7 +110,7 @@ export function AppShell({
               title="Admin"
               className={`grid justify-items-center gap-1 rounded-2xl px-1 py-2 text-[0.6875rem] font-semibold transition-colors ${
                 pathname.startsWith("/admin")
-                  ? "bg-[#f7f7f7] text-[#161616]"
+                  ? "bg-inverse text-bg"
                   : "text-muted hover:bg-surface-2 hover:text-fg"
               }`}
             >
@@ -127,14 +146,7 @@ export function AppShell({
               aria-label="ZEEK"
               className="inline-flex items-center"
             >
-              <Image
-                src="/brand/zeek-logo.png"
-                alt=""
-                width={960}
-                height={349}
-                priority
-                className="h-9 w-auto"
-              />
+              <BrandLogo className="h-9 w-auto" />
             </Link>
           </header>
           {children}
@@ -146,6 +158,7 @@ export function AppShell({
       >
         {moreOpen ? (
           <div className="bg-surface-1 border-line absolute inset-x-3 bottom-[calc(100%+0.5rem)] grid gap-1 rounded-[24px] border p-2 shadow-[var(--shadow-float)]">
+            <ThemeToggle variant="menu" />
             {more.map((item) => (
               <Link
                 key={item.href}

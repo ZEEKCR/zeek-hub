@@ -37,7 +37,7 @@ export function FilterChips({
             onClick={() => onChange(option.id)}
             className={`shrink-0 rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold transition-colors ${
               active
-                ? "bg-[#f7f7f7] text-[#161616]"
+                ? "bg-inverse text-bg"
                 : "border-line text-muted hover:text-fg hover:bg-surface-2 border bg-transparent"
             }`}
           >
