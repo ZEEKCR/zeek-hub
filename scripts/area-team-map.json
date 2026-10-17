@@ -1,12 +1,15 @@
 {
   "Growth": "Growth",
   "Partners": "Growth",
-  "Community": "Communications",
-  "Content": "Communications",
+  "Services": "Growth",
+  "Community": "Growth",
   "Ops": "Operations",
   "Volunteers": "Operations",
   "Events": "Operations",
-  "Logistics": "Logistics",
+  "Communications": "Communications",
+  "Content": "Communications",
+  "Technical": "Technical",
   "Platform": "Technical",
-  "Blockchain": "Technical"
+  "Blockchain": "Technical",
+  "Logistics": "Logistics"
 }

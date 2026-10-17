@@ -94,6 +94,10 @@ export type Actor = {
   displayName: string;
   /** Full name typed at account creation; matches the Encargado option. */
   fullName?: string;
+  /** Primary department (team id) assigned in the profile. */
+  teamId?: string | null;
+  /** Job title shown on the profile, not the permission role. */
+  jobTitle?: string | null;
   role: Role;
   teamIds: string[];
   headOfTeamIds: string[];

@@ -13,6 +13,7 @@ export type Action =
   | "users.deactivate"
   | "users.changeRole"
   | "users.rename"
+  | "users.editProfile"
   | "users.delete"
   | "volunteers.viewContact"
   | "resources.viewCore"
@@ -63,6 +64,7 @@ export function authorize(
     case "users.deactivate":
     case "users.changeRole":
     case "users.rename":
+    case "users.editProfile":
     case "users.delete":
     case "admin.sync":
     case "admin.audit":
@@ -92,6 +94,7 @@ export const POLICY_ACTIONS: Action[] = [
   "users.deactivate",
   "users.changeRole",
   "users.rename",
+  "users.editProfile",
   "users.delete",
   "volunteers.viewContact",
   "resources.viewCore",

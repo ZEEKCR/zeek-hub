@@ -38,6 +38,8 @@ export const user = pgTable("user", {
   }),
   notionVolunteerId: text("notion_volunteer_id"),
   teamId: text("team_id"),
+  jobTitle: text("job_title"),
+  phone: text("phone"),
   createdBy: text("created_by"),
   privacyAcceptedAt: timestamp("privacy_accepted_at", {
     withTimezone: true,

@@ -14,7 +14,7 @@ export const INITIAL_TEAMS: Team[] = [
     headIds: [],
     memberIds: [],
     active: true,
-    legacyAreas: ["Growth", "Partners"],
+    legacyAreas: ["Growth", "Partners", "Services", "Community"],
     updatedAt: "2026-10-14T00:00:00.000Z",
   },
   {
@@ -32,7 +32,7 @@ export const INITIAL_TEAMS: Team[] = [
     headIds: [],
     memberIds: [],
     active: true,
-    legacyAreas: ["Community", "Content"],
+    legacyAreas: ["Communications", "Content"],
     updatedAt: "2026-10-14T00:00:00.000Z",
   },
   {
@@ -41,7 +41,7 @@ export const INITIAL_TEAMS: Team[] = [
     headIds: [],
     memberIds: [],
     active: true,
-    legacyAreas: ["Platform", "Blockchain"],
+    legacyAreas: ["Technical", "Platform", "Blockchain"],
     updatedAt: "2026-10-14T00:00:00.000Z",
   },
   {

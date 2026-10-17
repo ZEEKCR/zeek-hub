@@ -9,6 +9,7 @@ import {
   deleteAccount,
   renameAccount,
   resetUserPassword,
+  updateAccountProfile,
   unlockAccount,
 } from "@/server/services/users";
 import type { Role } from "@/server/domain/types";
@@ -46,6 +47,9 @@ export async function createUserAction(
     ...(String(formData.get("phone") ?? "").trim()
       ? { phone: String(formData.get("phone")) }
       : {}),
+    ...(String(formData.get("jobTitle") ?? "").trim()
+      ? { jobTitle: String(formData.get("jobTitle")) }
+      : {}),
   });
   if (!result.ok) return result;
   revalidatePath("/admin/usuarios");
@@ -73,6 +77,28 @@ export async function renameUserAction(
   revalidatePath("/admin/usuarios");
   revalidatePath("/inicio");
   return { ok: true, data: { message: "Nombre guardado." } };
+}
+
+export async function updateProfileAction(
+  _state: UserActionState,
+  formData: FormData,
+): Promise<UserActionState> {
+  const actor = await requireActor();
+  const result = await updateAccountProfile(
+    actor,
+    String(formData.get("userId") ?? ""),
+    {
+      teamId: String(formData.get("teamId") ?? ""),
+      jobTitle: String(formData.get("jobTitle") ?? ""),
+      email: String(formData.get("email") ?? ""),
+      phone: String(formData.get("phone") ?? ""),
+    },
+  );
+  if (!result.ok) return result;
+  revalidatePath("/admin/usuarios");
+  revalidatePath("/perfil");
+  revalidatePath("/tareas");
+  return { ok: true, data: { message: "Perfil guardado." } };
 }
 
 export async function changeRoleAction(
