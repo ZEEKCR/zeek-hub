@@ -18,6 +18,9 @@ import { isArchivedTask } from "@/server/catalog/archive";
 import { loadCatalog } from "@/server/catalog/load";
 import { STATUS_LABEL, STAGE_LABEL } from "@/server/catalog/status";
 import { canEditActivity, dayKey, viewOf } from "@/server/catalog/view";
+import { AttendancePanel } from "@/components/events/attendance-panel";
+import { loadAttendance } from "@/server/services/attendance";
+import { authorize } from "@/server/auth/policy";
 import { ActivityEditor } from "@/components/events/activity-editor";
 
 export default async function EventDetailPage({
@@ -45,6 +48,9 @@ export default async function EventDetailPage({
   const resources = view
     .visibleResources(actor)
     .filter((resource) => activity.teamIds.includes(resource.teamId));
+  const attendance = isProject(activity)
+    ? null
+    : await loadAttendance(actor, activity.id);
   const names = activity.volunteerIds.map((volunteerId) =>
     view.personName(volunteerId),
   );
@@ -178,6 +184,13 @@ export default async function EventDetailPage({
               ) : null}
             </div>
           </details>
+          {attendance ? (
+            <AttendancePanel
+              activityId={activity.id}
+              view={attendance}
+              canManage={authorize(actor, "events.manage")}
+            />
+          ) : null}
           {archivedTasks.length > 0 ? (
             <details className="panel group">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-lg font-semibold">
