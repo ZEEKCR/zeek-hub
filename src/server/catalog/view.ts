@@ -137,6 +137,16 @@ export function viewOf(catalog: Catalog) {
       );
       return match?.name ?? "Sin asignar";
     },
+    /** Names of the people an id list resolves to; ids Notion could not match are left out. */
+    knownNames(ids: string[]) {
+      const names = ids.flatMap((id) => {
+        const match = catalog.people.find(
+          (person) => person.id === id || person.aliasIds.includes(id),
+        );
+        return match ? [match.name] : [];
+      });
+      return [...new Set(names)];
+    },
     personIds(id: string) {
       const match = catalog.people.find((person) => person.id === id);
       return match ? [match.id, ...match.aliasIds] : [id];

@@ -168,9 +168,7 @@ export default async function EventsPage({
               </div>
             ) : null}
             <div className="mt-4 flex items-center justify-between gap-3">
-              <AvatarStack
-                names={activity.volunteerIds.map((id) => view.personName(id))}
-              />
+              <AvatarStack names={view.knownNames(activity.volunteerIds)} />
               <span className="text-xs font-semibold tabular-nums opacity-70">
                 {view.taskProgress(activity.id)}% listo
               </span>
