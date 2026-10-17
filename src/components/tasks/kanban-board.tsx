@@ -2,7 +2,8 @@
 
 import { CalendarDays, Lock, PartyPopper } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { moveTaskAction } from "@/app/(app)/tareas/actions";
 import { Avatar } from "@/components/ui/avatar";
 import { PriorityBadge } from "@/components/ui/priority-badge";
@@ -27,6 +28,16 @@ export type BoardTask = {
   priority?: string;
   locked: boolean;
 };
+
+/**
+ * Renders in the document body so a fixed sheet is always positioned against
+ * the screen, whatever transforms or filters the page around it has.
+ */
+function Portal({ children }: { children: ReactNode }) {
+  return typeof document === "undefined"
+    ? null
+    : createPortal(children, document.body);
+}
 
 export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
   const [items, setItems] = useState(tasks);
@@ -118,13 +129,15 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
         ))}
       </div>
       {celebrating ? (
-        <p
-          role="status"
-          className="toast-pop bg-inverse text-bg fixed bottom-24 left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-[var(--shadow-float)] md:bottom-8"
-        >
-          <PartyPopper size={17} aria-hidden />
-          ¡Listo! Tarea completada
-        </p>
+        <Portal>
+          <p
+            role="status"
+            className="toast-pop bg-inverse text-bg fixed bottom-24 left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-[var(--shadow-float)] md:bottom-8"
+          >
+            <PartyPopper size={17} aria-hidden />
+            ¡Listo! Tarea completada
+          </p>
+        </Portal>
       ) : null}
       {error ? (
         <p className="badge badge-danger w-fit text-sm" role="alert">
@@ -255,35 +268,37 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
         ))}
       </div>
       {movingId ? (
-        <div
-          className="fixed inset-0 z-30 md:hidden"
-          role="dialog"
-          aria-label="Mover a"
-        >
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/60"
-            aria-label="Cerrar"
-            onClick={() => setMovingId(null)}
-          />
-          <div className="bg-surface-1 border-line absolute inset-x-0 bottom-0 grid gap-2 rounded-t-[28px] border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <p className="px-2 py-1 font-semibold">Mover a</p>
-            {STATUS_ORDER.map((option) => (
-              <button
-                key={option}
-                type="button"
-                className="btn btn-secondary"
-                disabled={pending}
-                onClick={() => {
-                  move(movingId, option);
-                  setMovingId(null);
-                }}
-              >
-                {STATUS_LABEL[option]}
-              </button>
-            ))}
+        <Portal>
+          <div
+            className="fixed inset-0 z-30 md:hidden"
+            role="dialog"
+            aria-label="Mover a"
+          >
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/60"
+              aria-label="Cerrar"
+              onClick={() => setMovingId(null)}
+            />
+            <div className="bg-surface-1 border-line absolute inset-x-0 bottom-0 grid gap-2 rounded-t-[28px] border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              <p className="px-2 py-1 font-semibold">Mover a</p>
+              {STATUS_ORDER.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className="btn btn-secondary"
+                  disabled={pending}
+                  onClick={() => {
+                    move(movingId, option);
+                    setMovingId(null);
+                  }}
+                >
+                  {STATUS_LABEL[option]}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </Portal>
       ) : null}
     </div>
   );
