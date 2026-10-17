@@ -124,7 +124,7 @@ export function CommandPalette({
             }}
             placeholder="Busca tareas, eventos, recursos o personas"
             aria-label="Buscar"
-            className="h-14 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-[var(--text-muted)]"
+            className="h-14 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-[var(--text-muted)] focus-visible:outline-none"
           />
           <button
             type="button"
