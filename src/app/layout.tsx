@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Urbanist } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/i18n/es.json";
+import { RegisterServiceWorker } from "@/components/pwa/register-sw";
 import "./globals.css";
 
 const urbanist = Urbanist({
@@ -17,6 +18,15 @@ const THEME_SCRIPT = `try{if(localStorage.getItem("zeek-theme")==="light"){var d
 export const metadata: Metadata = {
   title: "ZEEK Hub",
   description: "Coordinación de voluntarios de ZEEK",
+  appleWebApp: {
+    capable: true,
+    title: "ZEEK",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#161616",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -36,6 +46,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <NextIntlClientProvider locale="es" messages={messages}>
           {children}
         </NextIntlClientProvider>
+        <RegisterServiceWorker />
       </body>
     </html>
   );

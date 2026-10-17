@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
+import { InstallApp } from "@/components/pwa/install-app";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
@@ -89,6 +90,7 @@ export default async function ProfilePage() {
           >
             <div className="grid gap-2.5">
               <ThemeToggle variant="row" />
+              <InstallApp />
               <Link
                 href="/ayuda"
                 className="bg-surface-2 hover:bg-surface-3 flex items-center gap-3 rounded-[16px] px-4 py-3 transition-colors"
