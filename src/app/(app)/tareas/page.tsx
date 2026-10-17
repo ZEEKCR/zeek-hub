@@ -4,7 +4,7 @@ import { QuerySelect } from "@/components/ui/query-select";
 import { one, searchRecord } from "@/lib/query";
 import { formatCostaRica, formatWhen } from "@/lib/dates";
 import { requireActor } from "@/server/auth/request";
-import { assigneeKeys } from "@/server/catalog/focus";
+import { assigneeKeys, isPastDue } from "@/server/catalog/focus";
 import { loadCatalog } from "@/server/catalog/load";
 import { canMoveTask, dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { isArchivedTask } from "@/server/catalog/archive";
@@ -23,6 +23,8 @@ export default async function TasksPage({
   const person = one(raw.responsable) ?? "all";
   const event = one(raw.evento) ?? "all";
   const mine = one(raw.mias) === "1";
+  const showOverdue = one(raw.vencidas) === "1";
+  const today = todayKey();
   const mineKeys = assigneeKeys(
     actor.volunteerId,
     actor.notionUserId,
@@ -30,6 +32,7 @@ export default async function TasksPage({
   );
   const filtered = catalog.tasks.filter((task) => {
     if (isArchivedTask(task, catalog.activities)) return false;
+    if (!showOverdue && isPastDue(task, today)) return false;
     if (team !== "all" && !task.teamIds.includes(team)) return false;
     if (
       person !== "all" &&
@@ -41,7 +44,6 @@ export default async function TasksPage({
       return false;
     return true;
   });
-  const today = todayKey();
 
   return (
     <div className="grid gap-6">
@@ -58,7 +60,7 @@ export default async function TasksPage({
           </Link>
         ) : null}
       </header>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <QuerySelect
           label="Equipo"
           pathname="/tareas"
@@ -112,9 +114,20 @@ export default async function TasksPage({
             { id: "1", label: "Solo mías" },
           ]}
         />
+        <QuerySelect
+          label="Vencidas"
+          pathname="/tareas"
+          search={search}
+          param="vencidas"
+          value={showOverdue ? "1" : "all"}
+          options={[
+            { id: "all", label: "Ocultar" },
+            { id: "1", label: "Mostrar" },
+          ]}
+        />
       </div>
       <KanbanBoard
-        key={`${team}:${person}:${event}:${mine ? "1" : "0"}`}
+        key={`${team}:${person}:${event}:${mine ? "1" : "0"}:${showOverdue ? "1" : "0"}`}
         tasks={filtered.map((task) => {
           const due = task.dueDate?.start;
           const dueDay = due ? dayKey(due) : "";

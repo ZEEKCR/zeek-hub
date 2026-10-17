@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { clockLabel, formatWhen } from "@/lib/dates";
-import { isTodayOrOverdue, tasksAssignedTo } from "@/server/catalog/focus";
+import {
+  isPastDue,
+  isTodayOrOverdue,
+  tasksAssignedTo,
+} from "@/server/catalog/focus";
 import type { Task } from "@/server/domain/types";
 
 function task(
@@ -52,5 +56,33 @@ describe("home task scope", () => {
     expect(
       formatWhen("2026-10-20T18:00:00.000Z", false, "d MMM, HH:mm", "d MMM"),
     ).toBe("20 oct");
+  });
+});
+
+describe("past due tasks", () => {
+  const base: Task = {
+    id: "t",
+    title: "t",
+    status: "in_progress",
+    assigneeIds: [],
+    teamIds: [],
+    activityIds: [],
+    updatedAt: "2026-10-14T18:00:00.000Z",
+  };
+
+  it("is true only when the due day is before today, in any status", () => {
+    const today = "2026-10-17";
+    const due = (start: string, status: Task["status"] = "in_progress") => ({
+      ...base,
+      status,
+      dueDate: { start, timed: false },
+    });
+    expect(isPastDue(due("2026-09-30T18:00:00.000Z"), today)).toBe(true);
+    expect(isPastDue(due("2026-09-30T18:00:00.000Z", "done"), today)).toBe(
+      true,
+    );
+    expect(isPastDue(due("2026-10-17T18:00:00.000Z"), today)).toBe(false);
+    expect(isPastDue(due("2026-10-24T18:00:00.000Z"), today)).toBe(false);
+    expect(isPastDue(base, today)).toBe(false);
   });
 });
