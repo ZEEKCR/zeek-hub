@@ -1005,6 +1005,8 @@ export async function listTeamAccounts() {
       role: user.role,
       email: user.email,
       teamId: user.teamId,
+      jobTitle: user.jobTitle,
+      phone: user.phone,
       banned: user.banned,
     })
     .from(user);

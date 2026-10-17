@@ -4,8 +4,10 @@ import Image from "next/image";
 
 export default function ErrorPage({
   error,
+  reset,
 }: {
   error: Error & { digest?: string };
+  reset: () => void;
 }) {
   return (
     <main className="bg-bg grid min-h-dvh place-items-center px-4 text-center">
@@ -24,6 +26,9 @@ export default function ErrorPage({
         {error.digest ? (
           <p className="text-muted mt-2 text-xs">Incidente {error.digest}</p>
         ) : null}
+        <button type="button" onClick={reset} className="btn btn-primary mt-5">
+          Intentar de nuevo
+        </button>
       </div>
     </main>
   );
