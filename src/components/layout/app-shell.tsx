@@ -45,6 +45,8 @@ export function AppShell({
     { href: "/perfil", label: "Perfil" },
     ...(admin ? [{ href: "/admin/usuarios", label: "Admin" }] : []),
   ];
+  const moreActive =
+    more.some((item) => pathname.startsWith(item.href)) || profileActive;
   return (
     <div className="bg-bg text-fg min-h-dvh">
       <aside className="border-line bg-bg/70 fixed top-0 left-0 z-10 hidden h-dvh w-[88px] flex-col items-center gap-1 border-r py-4 backdrop-blur-xl md:flex">
@@ -123,7 +125,7 @@ export function AppShell({
         </div>
       </aside>
       <div className="md:pl-[88px]">
-        <div className="mx-auto w-full max-w-[1440px] px-4 pt-5 pb-28 md:px-8 md:pt-8 md:pb-10 xl:px-10">
+        <div className="mx-auto w-full max-w-[1440px] px-4 pt-5 pb-32 md:px-8 md:pt-8 md:pb-10 xl:px-10">
           <header className="mb-5 md:hidden">
             <Link
               href="/inicio"
@@ -138,17 +140,17 @@ export function AppShell({
       </div>
       <nav
         aria-label="Principal móvil"
-        className="border-line bg-bg/80 fixed inset-x-0 bottom-0 z-20 flex justify-around border-t px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-xl md:hidden"
+        className="pointer-events-none fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-20 md:hidden"
       >
         {moreOpen ? (
           <>
             <button
               type="button"
               aria-label="Cerrar menú"
-              className="fixed inset-0 -z-10 cursor-default"
+              className="pointer-events-auto fixed inset-0 -z-10 cursor-default"
               onClick={() => setMoreOpen(false)}
             />
-            <div className="pop bg-surface-1 border-line absolute inset-x-3 bottom-[calc(100%+0.5rem)] grid gap-1 rounded-[24px] border p-2 shadow-[var(--shadow-float)]">
+            <div className="pop bg-surface-1 border-line pointer-events-auto absolute inset-x-0 bottom-[calc(100%+0.75rem)] grid gap-1 rounded-[24px] border p-2 shadow-[var(--shadow-float)]">
               {more.map((item) => (
                 <Link
                   key={item.href}
@@ -164,47 +166,40 @@ export function AppShell({
             </div>
           </>
         ) : null}
-        {mobile.map((item) => {
-          const Icon = item.icon;
-          const active = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="grid min-h-12 min-w-14 place-items-center gap-0.5 text-[0.625rem] font-semibold"
-              aria-label={item.label}
-              aria-current={active ? "page" : undefined}
-            >
-              <span
-                className={`grid h-8 w-14 place-items-center rounded-full ${active ? "bg-accent text-[#161616]" : "text-muted"}`}
+        <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between rounded-full border border-white/10 bg-[#0f1116] p-1.5 shadow-[0_12px_32px_rgb(0_0_0/0.35)]">
+          {mobile.map((item) => {
+            const Icon = item.icon;
+            const active = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={item.label}
+                aria-current={active ? "page" : undefined}
+                className={`grid size-12 place-items-center rounded-full transition-all duration-300 ${
+                  active
+                    ? "scale-100 bg-white text-[#0f1116]"
+                    : "text-white/70 hover:text-white"
+                }`}
               >
-                <Icon size={19} strokeWidth={1.75} />
-              </span>
-              <span className={active ? "text-fg" : "text-muted"}>
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
-        <button
-          type="button"
-          className="grid min-h-12 min-w-14 place-items-center gap-0.5 text-[0.625rem] font-semibold"
-          aria-label="Más"
-          aria-expanded={moreOpen}
-          onClick={() => setMoreOpen((open) => !open)}
-        >
-          <span
-            className={`grid h-8 w-14 place-items-center rounded-full ${
-              more.some((item) => pathname.startsWith(item.href)) ||
-              profileActive
-                ? "bg-accent text-[#161616]"
-                : "text-muted"
+                <Icon size={21} strokeWidth={1.75} />
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            aria-label="Más"
+            aria-expanded={moreOpen}
+            onClick={() => setMoreOpen((open) => !open)}
+            className={`grid size-12 place-items-center rounded-full transition-all duration-300 ${
+              moreActive
+                ? "bg-white text-[#0f1116]"
+                : "text-white/70 hover:text-white"
             }`}
           >
-            <Menu size={19} strokeWidth={1.75} />
-          </span>
-          <span className="text-muted">Más</span>
-        </button>
+            <Menu size={21} strokeWidth={1.75} />
+          </button>
+        </div>
       </nav>
     </div>
   );

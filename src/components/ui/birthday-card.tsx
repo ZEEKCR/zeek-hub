@@ -1,13 +1,5 @@
-import { Cake, PartyPopper } from "lucide-react";
-import Link from "next/link";
-import { Avatar } from "@/components/ui/avatar";
-import { birthdayLabel, type UpcomingBirthday } from "@/server/birthdays/rules";
-
-function when(person: UpcomingBirthday) {
-  if (person.daysUntil === 0) return "Hoy";
-  if (person.daysUntil === 1) return "Mañana";
-  return `En ${person.daysUntil} días`;
-}
+import { PartyPopper } from "lucide-react";
+import type { UpcomingBirthday } from "@/server/birthdays/rules";
 
 /** Celebration banner for people whose birthday is today. */
 export function BirthdayBanner({
@@ -53,40 +45,5 @@ export function BirthdayBanner({
         </div>
       </div>
     </section>
-  );
-}
-
-export function BirthdayList({ people }: { people: UpcomingBirthday[] }) {
-  return people.length === 0 ? (
-    <p className="text-muted text-sm">
-      No hay cumpleaños en los próximos 30 días.{" "}
-      <Link href="/perfil" className="text-violet-text font-semibold">
-        Agrega el tuyo
-      </Link>
-      .
-    </p>
-  ) : (
-    <ul className="grid gap-2">
-      {people.slice(0, 6).map((person) => (
-        <li
-          key={person.userId}
-          className="bg-surface-2 flex items-center gap-3 rounded-[16px] px-3 py-2.5"
-        >
-          <Avatar name={person.name} size="sm" />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold">
-              {person.name}
-            </span>
-            <span className="text-muted text-xs">{birthdayLabel(person)}</span>
-          </span>
-          <span
-            className={`badge ${person.daysUntil === 0 ? "badge-accent" : ""}`}
-          >
-            {person.daysUntil === 0 ? <Cake size={12} aria-hidden /> : null}
-            {when(person)}
-          </span>
-        </li>
-      ))}
-    </ul>
   );
 }
