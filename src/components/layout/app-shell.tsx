@@ -6,17 +6,18 @@ import {
   KanbanSquare,
   Library,
   Menu,
+  Search,
   Settings,
   Sparkles,
   Users,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { initials } from "@/lib/utils";
-import { teamTone } from "@/lib/team-colors";
+import { CommandPalette } from "@/components/layout/command-palette";
+import { Avatar } from "@/components/ui/avatar";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 const items = [
   { href: "/inicio", label: "Inicio", icon: Home },
@@ -31,16 +32,31 @@ export function AppShell({
   children,
   name,
   teamId,
+  photo,
   admin,
 }: {
   children: ReactNode;
   name: string;
   teamId: string | null;
+  photo?: string | undefined;
   admin: boolean;
 }) {
   const pathname = usePathname();
   const mobile = items.slice(0, 4);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
+
+  useEffect(() => {
+    const shortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen((value) => !value);
+      }
+    };
+    document.addEventListener("keydown", shortcut);
+    return () => document.removeEventListener("keydown", shortcut);
+  }, []);
   const profileActive =
     pathname.startsWith("/perfil") || pathname.startsWith("/ayuda");
   const more = [
@@ -68,6 +84,16 @@ export function AppShell({
             className="h-10 w-auto"
           />
         </Link>
+        <button
+          type="button"
+          onClick={() => setSearchOpen(true)}
+          aria-label="Buscar"
+          title="Buscar (Ctrl+K)"
+          className="text-muted hover:bg-surface-2 hover:text-fg mx-2 mb-2 grid w-[calc(100%-1rem)] justify-items-center gap-1 rounded-2xl px-1 py-2 text-[0.6875rem] font-semibold transition-colors"
+        >
+          <Search size={20} strokeWidth={1.75} />
+          Buscar
+        </button>
         <nav aria-label="Principal" className="grid w-full gap-1 px-2">
           {items.map((item) => {
             const Icon = item.icon;
@@ -116,17 +142,13 @@ export function AppShell({
             title="Perfil"
           >
             <span
-              style={{
-                backgroundColor: (teamTone(teamId) ?? { solid: "#6335ED" })
-                  .solid,
-              }}
-              className={`grid size-9 place-items-center rounded-full text-xs font-semibold text-white ${
+              className={`rounded-full ${
                 profileActive
                   ? "ring-accent ring-2 ring-offset-2 ring-offset-[var(--bg)]"
                   : ""
               }`}
             >
-              {initials(name)}
+              <Avatar name={name} team={teamId} photo={photo} />
             </span>
             <span className="text-muted group-hover:text-fg">Perfil</span>
           </Link>
@@ -134,7 +156,7 @@ export function AppShell({
       </aside>
       <div className="md:pl-[88px]">
         <div className="mx-auto w-full max-w-[1440px] px-4 pt-5 pb-32 md:px-8 md:pt-8 md:pb-10 xl:px-10">
-          <header className="mb-5 md:hidden">
+          <header className="mb-5 flex items-center justify-between md:hidden">
             <Link
               href="/inicio"
               aria-label="ZEEK"
@@ -142,7 +164,16 @@ export function AppShell({
             >
               <BrandLogo className="h-9 w-auto" />
             </Link>
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Buscar"
+              className="bg-surface-1 border-line grid size-10 place-items-center rounded-full border"
+            >
+              <Search size={18} strokeWidth={1.75} aria-hidden />
+            </button>
           </header>
+          <CommandPalette open={searchOpen} onClose={closeSearch} />
           {children}
         </div>
       </div>

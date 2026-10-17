@@ -11,6 +11,8 @@ import { loadCatalog } from "@/server/catalog/load";
 import { canSeeContact } from "@/server/catalog/view";
 import { teamToneOrFallback } from "@/lib/team-colors";
 import { roleLabel } from "@/server/domain/roles";
+import { photoUrl } from "@/server/photos/rules";
+import { photoVersions } from "@/server/services/photos";
 import { listTeamAccounts } from "@/server/services/users";
 
 export default async function TeamDetailPage({
@@ -27,6 +29,7 @@ export default async function TeamDetailPage({
     (account) => account.teamId === team.id,
   );
   const tone = teamToneOrFallback(team.id);
+  const versions = await photoVersions();
   const showContact = canSeeContact(actor, [team.id]);
   const tasks = catalog.tasks.filter((task) => task.teamIds.includes(team.id));
 
@@ -62,7 +65,11 @@ export default async function TeamDetailPage({
                   key={member.id}
                   className="bg-surface-2 flex items-start gap-3 rounded-[16px] p-3.5"
                 >
-                  <Avatar name={name} team={team.id} />
+                  <Avatar
+                    name={name}
+                    team={team.id}
+                    photo={photoUrl(member.id, versions)}
+                  />
                   <div className="min-w-0">
                     <h3 className="truncate font-semibold">{name}</h3>
                     <p className="text-muted mt-0.5 text-sm">

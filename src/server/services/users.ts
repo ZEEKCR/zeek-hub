@@ -105,6 +105,7 @@ export async function buildActor(userId: string): Promise<Actor | null> {
     mustChangePassword: row.mustChangePassword,
     privacyAcceptedAt: row.privacyAcceptedAt?.toISOString() ?? null,
     tempPasswordExpiresAt: row.tempPasswordExpiresAt?.toISOString() ?? null,
+    welcomeSeenAt: row.welcomeSeenAt?.toISOString() ?? null,
   };
 }
 
@@ -1004,6 +1005,8 @@ export async function listTeamAccounts() {
       role: user.role,
       email: user.email,
       teamId: user.teamId,
+      jobTitle: user.jobTitle,
+      phone: user.phone,
       banned: user.banned,
     })
     .from(user);

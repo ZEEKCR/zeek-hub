@@ -16,6 +16,8 @@ import { ensureMigrated, getDb } from "@/server/db/client";
 import { user } from "@/server/db/schema";
 import { isPlaceholderEmail } from "@/server/auth/credentials";
 import { roleLabel } from "@/server/domain/roles";
+import { photoUrl } from "@/server/photos/rules";
+import { photoVersions } from "@/server/services/photos";
 import { INITIAL_TEAMS } from "@/server/repositories/memory/store";
 
 export default async function AdminUsersPage() {
@@ -30,6 +32,7 @@ export default async function AdminUsersPage() {
   }
   await ensureMigrated();
   const users = await getDb().select().from(user);
+  const versions = await photoVersions();
   const teams = INITIAL_TEAMS.map((team) => ({ id: team.id, name: team.name }));
   return (
     <div className="grid gap-6">
@@ -48,7 +51,11 @@ export default async function AdminUsersPage() {
             return (
               <li key={item.id} className="panel-flat p-4">
                 <div className="flex items-start gap-3">
-                  <Avatar name={item.name} team={item.teamId} />
+                  <Avatar
+                    name={item.name}
+                    team={item.teamId}
+                    photo={photoUrl(item.id, versions)}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{item.name}</p>
                     <p className="text-muted truncate text-sm">

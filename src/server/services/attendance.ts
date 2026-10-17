@@ -351,3 +351,29 @@ export async function buildEventReport(
   await audit(actor, "event.report", activityId, { rows: rows.length - 1 });
   return ok(rows);
 }
+
+/** Shifts the person signed up for that start inside the window, for "Mi semana". */
+export async function listMyShifts(actor: Actor, from: Date, to: Date) {
+  await ensureMigrated();
+  const db = getDb();
+  const mine = await db
+    .select({ shiftId: shiftSignups.shiftId })
+    .from(shiftSignups)
+    .where(eq(shiftSignups.userId, actor.userId));
+  if (mine.length === 0) return [];
+  const shifts = await db
+    .select()
+    .from(eventShifts)
+    .where(
+      inArray(
+        eventShifts.id,
+        mine.map((row) => row.shiftId),
+      ),
+    )
+    .orderBy(asc(eventShifts.startsAt));
+  return shifts.filter(
+    (shift) =>
+      shift.endsAt.getTime() >= from.getTime() &&
+      shift.startsAt.getTime() <= to.getTime(),
+  );
+}

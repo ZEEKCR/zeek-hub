@@ -16,6 +16,7 @@ import {
   formatWhen,
   shiftCostaRicaDay,
 } from "@/lib/dates";
+import { greeting, firstName } from "@/lib/greeting";
 import { one, searchRecord } from "@/lib/query";
 import { requireActor } from "@/server/auth/request";
 import {
@@ -28,6 +29,8 @@ import { dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { isArchivedTask } from "@/server/catalog/archive";
 import { assigneeToken } from "@/server/domain/assignee";
 import { isProject } from "@/server/domain/projects";
+import { listMyShifts } from "@/server/services/attendance";
+import { weekAgenda, type WeekItem } from "@/server/catalog/week";
 import { listUpcomingBirthdays } from "@/server/services/birthdays";
 
 export default async function HomePage({
@@ -72,6 +75,29 @@ export default async function HomePage({
     const day = dayKey(start);
     return day >= today && day <= weekEnd;
   });
+  const myShifts = await listMyShifts(actor, new Date(), daysFromNow(7));
+  const week = weekAgenda([
+    ...dueWeek.map<WeekItem>((task) => ({
+      id: task.id,
+      kind: "tarea",
+      title: task.title,
+      detail: "Vence",
+      at: task.dueDate?.start ?? today,
+      day: dayKey(task.dueDate?.start ?? today),
+      timed: task.dueDate?.timed === true,
+      href: `/tareas/${task.id}`,
+    })),
+    ...myShifts.map<WeekItem>((shift) => ({
+      id: shift.id,
+      kind: "turno",
+      title: shift.title,
+      detail: `${view.activityTitle(shift.activityId) || "Evento"} · ${formatCostaRica(shift.startsAt, "HH:mm")}–${formatCostaRica(shift.endsAt, "HH:mm")}`,
+      at: shift.startsAt.toISOString(),
+      day: formatCostaRica(shift.startsAt, "yyyy-MM-dd"),
+      timed: true,
+      href: `/eventos/${shift.activityId}`,
+    })),
+  ]);
   const doneMonth = mine.filter(
     (task) =>
       task.status === "done" &&
@@ -151,7 +177,7 @@ export default async function HomePage({
       />
       <PageHeader
         kicker={formatCostaRica(new Date(), "EEEE d MMMM")}
-        title={`Hola, ${actor.fullName || actor.displayName}`}
+        title={`${greeting(new Date())}, ${firstName(actor.fullName || actor.displayName)}`}
         subtitle="Esto es lo que tienes pendiente y lo que viene en el calendario."
       />
       <BirthdayBanner people={birthdaysToday} selfId={actor.userId} />
@@ -250,6 +276,42 @@ export default async function HomePage({
               </HeroGradientCard>
             </Link>
           ) : null}
+          <Panel
+            title="Mi semana"
+            description="Lo que vence y tus turnos en los próximos 7 días."
+          >
+            {week.length === 0 ? (
+              <p className="text-muted text-sm">
+                Nada urgente esta semana. ¡Buen momento para adelantar algo!
+              </p>
+            ) : (
+              <ul className="grid gap-2">
+                {week.map((item) => (
+                  <li key={`${item.kind}-${item.id}`}>
+                    <Link
+                      href={item.href}
+                      className="bg-surface-2 hover:bg-surface-3 flex items-center gap-3 rounded-[14px] px-3.5 py-2.5 transition-colors"
+                    >
+                      <span
+                        className={`badge shrink-0 ${item.kind === "turno" ? "badge-violet" : ""}`}
+                      >
+                        {formatCostaRica(`${item.day}T18:00:00Z`, "EEE d")}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold">
+                          {item.title}
+                        </span>
+                        <span className="text-muted block truncate text-xs">
+                          {item.kind === "turno" ? "Turno · " : ""}
+                          {item.detail}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
           <Panel title="Avisos">
             {notices.length === 0 ? (
               <p className="text-muted text-sm">No hay avisos nuevos.</p>
@@ -290,4 +352,8 @@ function countdown(start: string) {
   if (hours <= 0) return "En curso";
   if (hours < 48) return `Faltan ${hours} h`;
   return `Faltan ${Math.round(hours / 24)} días`;
+}
+
+function daysFromNow(days: number) {
+  return new Date(Date.now() + days * 86_400_000);
 }

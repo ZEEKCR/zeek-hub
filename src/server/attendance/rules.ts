@@ -85,3 +85,30 @@ export function csvCell(value: string | number) {
 export function toCsv(rows: (string | number)[][]) {
   return `﻿${rows.map((row) => row.map(csvCell).join(",")).join("\r\n")}\r\n`;
 }
+
+/** Hours of shifts that already ended; a shift in progress or ahead does not count yet. */
+export function completedShiftHours(
+  shifts: { startsAt: Date; endsAt: Date }[],
+  now: Date,
+) {
+  return shifts
+    .filter((shift) => shift.endsAt.getTime() <= now.getTime())
+    .reduce(
+      (total, shift) => total + shiftHours(shift.startsAt, shift.endsAt),
+      0,
+    );
+}
+
+/** Events the person said "voy" to whose day has already passed. */
+export function attendedEvents(
+  goingActivityIds: string[],
+  eventDay: Map<string, string>,
+  today: string,
+) {
+  return new Set(
+    goingActivityIds.filter((id) => {
+      const day = eventDay.get(id);
+      return day !== undefined && day < today;
+    }),
+  ).size;
+}

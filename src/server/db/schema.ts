@@ -41,6 +41,10 @@ export const user = pgTable("user", {
   teamId: text("team_id"),
   jobTitle: text("job_title"),
   phone: text("phone"),
+  welcomeSeenAt: timestamp("welcome_seen_at", {
+    withTimezone: true,
+    mode: "date",
+  }),
   birthMonth: integer("birth_month"),
   birthDay: integer("birth_day"),
   createdBy: text("created_by"),
@@ -231,3 +235,14 @@ export const shiftSignups = pgTable(
   },
   (table) => [primaryKey({ columns: [table.shiftId, table.userId] })],
 );
+
+export const userPhotos = pgTable("user_photos", {
+  userId: text("user_id").primaryKey(),
+  contentType: text("content_type").notNull(),
+  /** Base64 of a small JPEG the browser resized before uploading. */
+  data: text("data").notNull(),
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+});

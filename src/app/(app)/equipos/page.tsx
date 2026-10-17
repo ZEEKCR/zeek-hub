@@ -1,4 +1,5 @@
 import { Users } from "lucide-react";
+import Link from "next/link";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { EmptyState } from "@/components/ui/empty-state";
 import { NotchedCard } from "@/components/ui/notched-card";
@@ -17,6 +18,12 @@ export default async function TeamsPage() {
       <PageHeader
         title="Equipos"
         subtitle="Quién forma cada departamento y cuánto trabajo tiene abierto."
+        actions={
+          <Link href="/personas" className="btn btn-secondary">
+            <Users size={17} aria-hidden />
+            Directorio de personas
+          </Link>
+        }
       />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {catalog.teams.map((team) => {

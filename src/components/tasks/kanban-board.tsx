@@ -1,8 +1,8 @@
 "use client";
 
-import { CalendarDays, Lock } from "lucide-react";
+import { CalendarDays, Lock, PartyPopper } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { moveTaskAction } from "@/app/(app)/tareas/actions";
 import { Avatar } from "@/components/ui/avatar";
 import { PriorityBadge } from "@/components/ui/priority-badge";
@@ -34,6 +34,21 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
   const [movingId, setMovingId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [celebrating, setCelebrating] = useState<string | null>(null);
+  const celebrateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (celebrateTimer.current) clearTimeout(celebrateTimer.current);
+    },
+    [],
+  );
+
+  function celebrate(id: string) {
+    if (celebrateTimer.current) clearTimeout(celebrateTimer.current);
+    setCelebrating(id);
+    celebrateTimer.current = setTimeout(() => setCelebrating(null), 2400);
+  }
 
   async function move(id: string, next: TaskStatus) {
     const current = items.find((task) => task.id === id);
@@ -46,9 +61,11 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
       rows.map((task) => (task.id === id ? { ...task, status: next } : task)),
     );
     setStatus(next);
+    if (next === "done") celebrate(id);
     try {
       const result = await moveTaskAction(id, next);
       if (!result.ok) {
+        if (next === "done") setCelebrating(null);
         setItems((rows) =>
           rows.map((task) =>
             task.id === id && task.status === next
@@ -100,6 +117,15 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
           </button>
         ))}
       </div>
+      {celebrating ? (
+        <p
+          role="status"
+          className="toast-pop bg-inverse text-bg fixed bottom-24 left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-[var(--shadow-float)] md:bottom-8"
+        >
+          <PartyPopper size={17} aria-hidden />
+          ¡Listo! Tarea completada
+        </p>
+      ) : null}
       {error ? (
         <p className="badge badge-danger w-fit text-sm" role="alert">
           {error}
@@ -144,7 +170,7 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
                   }}
                   className={`bg-surface-2 border-line hover:border-surface-3 rounded-[18px] border p-3 motion-safe:transition ${
                     task.locked ? "" : "md:cursor-grab"
-                  }`}
+                  } ${celebrating === task.id ? "celebrate" : ""}`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
