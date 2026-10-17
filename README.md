@@ -35,6 +35,10 @@ pnpm notion:setup
 CONFIRM=yes pnpm notion:setup -- --apply
 ```
 
+## Asignación de tareas (columna Encargado)
+
+La base Tasks tiene una columna **Encargado** de tipo multi-select (o select). El hub crea ahí una opción con el nombre completo de cada cuenta nueva, y una tarea pertenece a una cuenta cuando el nombre de la opción coincide con el nombre de la cuenta (sin distinguir mayúsculas ni tildes). No hace falta que la persona exista en Notion. Las columnas `Assignee` y `Responsable` se siguen leyendo para las tareas anteriores.
+
 ## Seed de admins
 
 El seed se corre a mano, fuera de CI, y solo si `SEED_USERS` está definido. Imprime cada contraseña temporal una sola vez en esa consola. `pnpm db:migrate`, `pnpm notion:setup` y `pnpm seed:admins` leen `.env` solos.

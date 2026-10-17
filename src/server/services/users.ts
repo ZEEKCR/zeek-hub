@@ -30,6 +30,7 @@ import { LIMITS, consumeLimit } from "@/server/ratelimit/limiter";
 import { repositories } from "@/server/container";
 import { INITIAL_TEAMS } from "@/server/repositories/memory/store";
 import { getEnv } from "@/env";
+import { ensureAssigneeOption } from "@/server/repositories/notion/write";
 
 const TEMP_PASSWORD_MS = 72 * 60 * 60 * 1000;
 
@@ -71,9 +72,10 @@ export async function buildActor(userId: string): Promise<Actor | null> {
   const row = rows[0];
   if (!row || !row.username) return null;
   const repos = repositories();
-  const volunteer = row.notionVolunteerId
-    ? await repos.volunteers.get(row.notionVolunteerId)
-    : await repos.volunteers.findByUserId(row.id);
+  const volunteer =
+    (row.notionVolunteerId
+      ? await repos.volunteers.get(row.notionVolunteerId)
+      : null) ?? (await repos.volunteers.findByUserId(row.id));
   const teams = await repos.teams.list();
   const volunteerId = volunteer?.id ?? null;
   const headOfTeamIds =
@@ -88,6 +90,7 @@ export async function buildActor(userId: string): Promise<Actor | null> {
     notionUserId: volunteer?.notionUserId ?? null,
     username: row.username,
     displayName: row.displayUsername || row.name,
+    fullName: row.name,
     role: asRole(row.role),
     teamIds: volunteer?.teamIds ?? [],
     headOfTeamIds,
@@ -311,7 +314,7 @@ export async function provisionUser(
     ? input.email.trim().toLowerCase()
     : placeholderEmail(username);
   const userId = crypto.randomUUID();
-  const volunteerId = crypto.randomUUID();
+  let volunteerId = crypto.randomUUID();
   const now = new Date();
   const expires = new Date(now.getTime() + TEMP_PASSWORD_MS);
   const contact = publicEmail(email);
@@ -359,6 +362,14 @@ export async function provisionUser(
         ...(input.phone ? { phone: input.phone } : {}),
         updatedAt: now.toISOString(),
       });
+      if (volunteer.id !== volunteerId) {
+        // Notion assigns its own page id; keep the account pointing at it.
+        volunteerId = volunteer.id;
+        await tx
+          .update(user)
+          .set({ notionVolunteerId: volunteer.id })
+          .where(eq(user.id, userId));
+      }
       for (const team of teams) {
         await repos.teams.upsert({
           ...team,
@@ -372,6 +383,11 @@ export async function provisionUser(
     });
   } catch {
     return err("upstream", "No se pudo crear el usuario.");
+  }
+
+  if (getEnv().NOTION_MODE === "live") {
+    // Best effort: Notion also creates the option the first time it is used.
+    await ensureAssigneeOption(input.name).catch(() => undefined);
   }
 
   await writeAudit({

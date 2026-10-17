@@ -1,11 +1,17 @@
 import { dayKey } from "@/server/catalog/view";
+import { assigneeToken } from "@/server/domain/assignee";
 import type { Task } from "@/server/domain/types";
 
 export function assigneeKeys(
   volunteerId: string | null,
   notionUserId?: string | null,
+  fullName?: string | null,
 ) {
-  return [volunteerId, notionUserId].filter((id): id is string => Boolean(id));
+  return [
+    volunteerId,
+    notionUserId,
+    fullName ? assigneeToken(fullName) : null,
+  ].filter((id): id is string => Boolean(id));
 }
 
 export function tasksAssignedTo(tasks: Task[], ids: string[]) {

@@ -92,6 +92,8 @@ export type Actor = {
   notionUserId?: string | null;
   username: string;
   displayName: string;
+  /** Full name typed at account creation; matches the Encargado option. */
+  fullName?: string;
   role: Role;
   teamIds: string[];
   headOfTeamIds: string[];

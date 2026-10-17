@@ -4,6 +4,7 @@ import { QuerySelect } from "@/components/ui/query-select";
 import { one, searchRecord } from "@/lib/query";
 import { formatCostaRica, formatWhen } from "@/lib/dates";
 import { requireActor } from "@/server/auth/request";
+import { assigneeKeys } from "@/server/catalog/focus";
 import { loadCatalog } from "@/server/catalog/load";
 import { canEditTask, dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { isArchivedTask } from "@/server/catalog/archive";
@@ -22,6 +23,11 @@ export default async function TasksPage({
   const person = one(raw.responsable) ?? "all";
   const event = one(raw.evento) ?? "all";
   const mine = one(raw.mias) === "1";
+  const mineKeys = assigneeKeys(
+    actor.volunteerId,
+    actor.notionUserId,
+    actor.fullName,
+  );
   const filtered = catalog.tasks.filter((task) => {
     if (isArchivedTask(task, catalog.activities)) return false;
     if (team !== "all" && !task.teamIds.includes(team)) return false;
@@ -31,11 +37,7 @@ export default async function TasksPage({
     )
       return false;
     if (event !== "all" && !task.activityIds.includes(event)) return false;
-    if (
-      mine &&
-      actor.volunteerId &&
-      !task.assigneeIds.includes(actor.volunteerId)
-    )
+    if (mine && !task.assigneeIds.some((id) => mineKeys.includes(id)))
       return false;
     return true;
   });

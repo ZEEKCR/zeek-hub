@@ -1,3 +1,4 @@
+import { foldName } from "@/server/domain/assignee";
 import type {
   ActivityStage,
   Priority,
@@ -139,6 +140,52 @@ export async function trashNotionPage(id: string) {
     client.pages.update({
       page_id: id,
       in_trash: true,
+    }),
+  );
+}
+
+type SelectOption = { id?: string; name: string; color?: string };
+
+/**
+ * Adds a name to the Encargado options of Tasks so it shows in the dropdown
+ * before anyone is assigned. Existing options are sent back unchanged.
+ */
+export async function ensureAssigneeOption(name: string) {
+  const label = name.trim();
+  if (!label) return;
+  const { client, call } = createNotionClient();
+  const dataSourceIdValue = dataSourceId("tasks");
+  const propertyName = notionSchema.tasks.properties.encargado;
+  const source = (await call(() =>
+    client.dataSources.retrieve({ data_source_id: dataSourceIdValue }),
+  )) as unknown as {
+    properties?: Record<
+      string,
+      {
+        type?: string;
+        select?: { options?: SelectOption[] };
+        multi_select?: { options?: SelectOption[] };
+      }
+    >;
+  };
+  const property = source.properties?.[propertyName];
+  const kind = property?.type;
+  if (!property || (kind !== "multi_select" && kind !== "select")) return;
+  const existing = property[kind]?.options ?? [];
+  if (existing.some((option) => foldName(option.name) === foldName(label)))
+    return;
+  const options = [
+    ...existing.map((option) => ({
+      ...(option.id ? { id: option.id } : {}),
+      name: option.name,
+      ...(option.color ? { color: option.color } : {}),
+    })),
+    { name: label },
+  ];
+  await call(() =>
+    client.dataSources.update({
+      data_source_id: dataSourceIdValue,
+      properties: { [propertyName]: { [kind]: { options } } } as never,
     }),
   );
 }
