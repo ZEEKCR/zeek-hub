@@ -6,7 +6,10 @@ import { authorize } from "@/server/auth/policy";
 import { requireActor } from "@/server/auth/request";
 import { invalidateCatalog } from "@/server/catalog/load";
 import { writeAudit } from "@/server/audit/log";
-import { createResourcePage } from "@/server/repositories/notion/resources";
+import {
+  createResourcePage,
+  describeResourceError,
+} from "@/server/repositories/notion/resources";
 import { INITIAL_TEAMS } from "@/server/repositories/memory/store";
 import { validateResourceInput } from "@/server/resources/rules";
 
@@ -45,8 +48,9 @@ export async function createResourceAction(
   let pageId = "";
   try {
     pageId = await createResourcePage(parsed.data, team?.name ?? "");
-  } catch {
-    return { ok: false, message: "No se pudo guardar el recurso en Notion." };
+  } catch (error) {
+    console.error("resource.create failed", error);
+    return { ok: false, message: describeResourceError(error) };
   }
   await writeAudit({
     actorType: "user",
