@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+:root,
+.dark {
+  color-scheme: dark;
+  --bg: #161616;
+  --surface-1: #1e1e1e;
+  --surface-2: #262626;
+  --surface-3: #303030;
+  --surface-inverse: #f7f7f7;
+  --border: #2e2e2e;
+  --text: #f7f7f7;
+  --text-muted: #a1a1a1;
+  --accent: #01e576;
+  --on-accent: #161616;
+  --accent-text: #01e576;
+  --violet: #6335ed;
+  --on-violet: #ffffff;
+  --violet-text: #9f86f7;
+  --focus: #8b6cf6;
+  --danger: #ff5c5c;
+  --warning: #ffb547;
+  --shadow-card:
+    0 1px 0 rgb(255 255 255 / 0.04) inset, 0 8px 24px rgb(0 0 0 / 0.35);
+  --shadow-float: 0 16px 48px rgb(0 0 0 / 0.45);
+  --primary: var(--accent);
+  --primary-foreground: var(--on-accent);
+  --secondary: var(--surface-2);
+  --ring: var(--focus);
+  --radius: 14px;
+  --background: var(--bg);
+  --foreground: var(--text);
+}
+
+.light {
+  color-scheme: light;
+  --bg: #f7f7f7;
+  --surface-1: #ffffff;
+  --surface-2: #efefef;
+  --surface-3: #e4e4e4;
+  --surface-inverse: #161616;
+  --border: #e2e2e2;
+  --text: #161616;
+  --text-muted: #5c5c5c;
+  --accent-text: #007a3f;
+  --violet-text: #6335ed;
+  --focus: #6335ed;
+  --danger: #c62828;
+  --warning: #9a5b00;
+  --shadow-card:
+    0 1px 0 rgb(255 255 255 / 0.7) inset, 0 8px 24px rgb(0 0 0 / 0.08);
+  --shadow-float: 0 16px 48px rgb(0 0 0 / 0.12);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-inverse: var(--surface-inverse);
+  --color-line: var(--border);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-accent-text: var(--accent-text);
+  --color-violet: var(--violet);
+  --color-on-violet: var(--on-violet);
+  --color-violet-text: var(--violet-text);
+  --color-focus: var(--focus);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --font-sans: var(--font-urbanist), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-urbanist), ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 28px;
+  --radius-card-lg: 32px;
+  --radius-inner: 20px;
+  --radius-control: 14px;
+  --radius-pill: 9999px;
+  --shadow-card: var(--shadow-card);
+  --shadow-float: var(--shadow-float);
+  --shadow-accent-glow: 0 8px 32px rgb(1 229 118 / 0.25);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-urbanist), ui-sans-serif, system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 100ms !important;
+  }
+}

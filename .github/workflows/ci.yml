@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: pglite:memory
+      BETTER_AUTH_SECRET: test-secret-test-secret-test-secret-32
+      BETTER_AUTH_URL: http://127.0.0.1:3000
+      NOTION_MODE: mock
+      HIBP_ENABLED: "false"
+      CRON_SECRET: test-cron-secret
+      NOTION_WEBHOOK_SECRET: test-webhook-secret
+      UPSTASH_REDIS_REST_URL: https://example.upstash.io
+      UPSTASH_REDIS_REST_TOKEN: test-token
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - name: gitleaks
+        run: |
+          curl --fail --silent --show-error --location \
+            --output gitleaks.tar.gz \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz
+          tar --extract --gzip --file gitleaks.tar.gz gitleaks
+          ./gitleaks detect --source . --redact --no-banner
+      - name: forbidden term
+        run: |
+          if git grep -i -n -I cartago -- . ':(exclude).github' ':(exclude)docs'; then
+            echo "Forbidden term found"
+            exit 1
+          fi

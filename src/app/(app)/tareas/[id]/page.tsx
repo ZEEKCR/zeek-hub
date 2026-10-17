@@ -1,0 +1,46 @@
+import { notFound } from "next/navigation";
+import { TaskEditor } from "@/components/tasks/task-editor";
+import { requireActor } from "@/server/auth/request";
+import { loadCatalog } from "@/server/catalog/load";
+import { canEditTask, dayKey } from "@/server/catalog/view";
+
+export default async function TaskDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const actor = await requireActor();
+  const catalog = await loadCatalog();
+  const { id } = await params;
+  const task = catalog.tasks.find((item) => item.id === id);
+  if (!task) notFound();
+  const activities = catalog.activities
+    .filter(
+      (activity) =>
+        activity.published || task.activityIds.includes(activity.id),
+    )
+    .map((activity) => ({ id: activity.id, title: activity.title }))
+    .sort((left, right) => left.title.localeCompare(right.title, "es"));
+
+  return (
+    <div className="grid gap-6">
+      <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
+        {task.title}
+      </h1>
+      <TaskEditor
+        locked={!canEditTask(actor, task)}
+        activities={activities}
+        task={{
+          id: task.id,
+          title: task.title,
+          status: task.status,
+          ...(task.priority ? { priority: task.priority } : {}),
+          ...(task.dueDate?.start ? { due: dayKey(task.dueDate.start) } : {}),
+          ...(task.area ? { area: task.area } : {}),
+          ...(task.activityIds[0] ? { activityId: task.activityIds[0] } : {}),
+          ...(task.notes ? { notes: task.notes } : {}),
+        }}
+      />
+    </div>
+  );
+}
