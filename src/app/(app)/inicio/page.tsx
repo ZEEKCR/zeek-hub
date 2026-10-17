@@ -20,6 +20,7 @@ import {
 import { loadCatalog } from "@/server/catalog/load";
 import { dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { isArchivedTask } from "@/server/catalog/archive";
+import { assigneeToken } from "@/server/domain/assignee";
 
 export default async function HomePage({
   searchParams,
@@ -43,6 +44,15 @@ export default async function HomePage({
   );
   const linked = assigneeIds.length > 0;
   const mine = tasksAssignedTo(tasks, assigneeIds);
+  const nameToken = actor.fullName ? assigneeToken(actor.fullName) : null;
+  const nameListed =
+    nameToken !== null &&
+    catalog.people.some(
+      (person) =>
+        person.id === nameToken || person.aliasIds.includes(nameToken),
+    );
+  const nameUnmatched =
+    catalog.connected && nameToken !== null && mine.length === 0 && !nameListed;
   const focus = mine.filter((task) => isTodayOrOverdue(task, today));
   const open = mine.filter((task) => task.status !== "done");
   const weekEnd = shiftCostaRicaDay(today, 7);
@@ -126,7 +136,7 @@ export default async function HomePage({
         items={agenda}
       />
       <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold tracking-tight">
-        Hola, {actor.displayName}
+        Hola, {actor.fullName || actor.displayName}
       </h1>
       {catalog.connected ? null : (
         <p className="text-muted">
@@ -134,6 +144,13 @@ export default async function HomePage({
             "Notion todavía no está conectado en este entorno."}
         </p>
       )}
+      {nameUnmatched ? (
+        <p className="text-muted">
+          «{actor.fullName}» no aparece en la columna Encargado de ninguna
+          tarea. Si te asignaron tareas y no las ves, pide a un admin que
+          corrija tu nombre en Usuarios.
+        </p>
+      ) : null}
       {linked ? null : (
         <p className="text-muted">
           Esta cuenta no está enlazada a una persona de Notion.

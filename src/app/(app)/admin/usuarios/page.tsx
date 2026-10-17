@@ -1,4 +1,5 @@
 import { CreateUserForm } from "@/app/(app)/admin/usuarios/create-user-form";
+import { RenameUserForm } from "@/app/(app)/admin/usuarios/rename-user-form";
 import { requireActor } from "@/server/auth/request";
 import { ensureMigrated, getDb } from "@/server/db/client";
 import { user } from "@/server/db/schema";
@@ -18,13 +19,12 @@ export default async function AdminUsersPage() {
         <ul className="mt-6 grid gap-3">
           {users.map((item) => (
             <li key={item.id} className="bg-surface-1 rounded-[20px] px-4 py-3">
-              <p className="font-semibold">
-                {item.displayUsername || item.name}
-              </p>
+              <p className="font-semibold">{item.name}</p>
               <p className="text-muted text-sm">
                 @{item.username} · {item.role}
                 {item.banned ? " · inactivo" : ""}
               </p>
+              <RenameUserForm userId={item.id} name={item.name} />
             </li>
           ))}
         </ul>
