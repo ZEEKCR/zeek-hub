@@ -1,4 +1,4 @@
-import { ChevronRight, LifeBuoy, Monitor } from "lucide-react";
+import { ChevronRight, LifeBuoy } from "lucide-react";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -6,8 +6,6 @@ import { Avatar } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
-import { formatCostaRica } from "@/lib/dates";
-import { sessionDevice } from "@/lib/session-device";
 import { readyAuth } from "@/server/auth/config";
 import { eq } from "drizzle-orm";
 import { publicEmail } from "@/server/auth/credentials";
@@ -28,26 +26,13 @@ export default async function ProfilePage() {
     .where(eq(user.id, actor.userId));
   const department = INITIAL_TEAMS.find((team) => team.id === account?.teamId);
   const contactEmail = publicEmail(account?.email);
-  const auth = await readyAuth();
-  const sessions = await auth.api.listSessions({ headers: await headers() });
-  const devices = new Map<string, (typeof sessions)[number]>();
-  for (const item of sessions) {
-    const label = sessionDevice(item.userAgent);
-    const current = devices.get(label);
-    if (
-      !current ||
-      new Date(item.expiresAt).getTime() > new Date(current.expiresAt).getTime()
-    ) {
-      devices.set(label, item);
-    }
-  }
   const birthday = await getOwnBirthday(actor);
   const displayName = actor.fullName || actor.displayName;
   return (
     <div className="grid gap-6">
       <PageHeader
         title="Perfil"
-        subtitle="Tus datos en ZEEK Hub y las sesiones abiertas."
+        subtitle="Tus datos en ZEEK Hub y tus preferencias."
       />
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <Panel>
@@ -129,47 +114,10 @@ export default async function ProfilePage() {
           >
             <BirthdayForm current={birthday} />
           </Panel>
-          <Panel
-            title="Sesiones activas"
-            description="Los dispositivos con tu cuenta abierta."
-          >
-            <ul className="grid gap-2.5">
-              {[...devices.entries()].map(([label, item]) => (
-                <li
-                  key={label}
-                  className="bg-surface-2 flex items-center gap-3 rounded-[16px] px-4 py-3 text-sm"
-                >
-                  <Monitor
-                    size={18}
-                    className="text-muted shrink-0"
-                    aria-hidden
-                  />
-                  <span className="min-w-0">
-                    <span className="block font-semibold">{label}</span>
-                    <span className="text-muted">
-                      Vence{" "}
-                      {formatCostaRica(item.expiresAt, "d MMM yyyy, HH:mm")}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <form action={revokeOthers} className="mt-4">
-              <button type="submit" className="btn btn-secondary">
-                Cerrar las demás
-              </button>
-            </form>
-          </Panel>
         </div>
       </div>
     </div>
   );
-}
-
-async function revokeOthers() {
-  "use server";
-  const auth = await readyAuth();
-  await auth.api.revokeOtherSessions({ headers: await headers() });
 }
 
 async function signOut() {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ListChecks } from "lucide-react";
-import { BirthdayBanner, BirthdayList } from "@/components/ui/birthday-card";
+import { BirthdayBanner } from "@/components/ui/birthday-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HeroGradientCard } from "@/components/ui/hero-gradient-card";
 import { KpiStat } from "@/components/ui/kpi-stat";
@@ -44,8 +44,7 @@ export default async function HomePage({
   const search = searchRecord(raw);
   const filter = one(raw.filtro) ?? "all";
   const today = todayKey();
-  const birthdays = await listUpcomingBirthdays(actor, today);
-  const birthdaysToday = birthdays.filter((person) => person.daysUntil === 0);
+  const birthdaysToday = await listUpcomingBirthdays(actor, today, 0);
   const assigneeIds = assigneeKeys(
     actor.volunteerId,
     actor.notionUserId,
@@ -245,9 +244,6 @@ export default async function HomePage({
               </HeroGradientCard>
             </Link>
           ) : null}
-          <Panel title="Cumpleaños" description="Los próximos 30 días.">
-            <BirthdayList people={birthdays} />
-          </Panel>
           <Panel title="Avisos">
             {notices.length === 0 ? (
               <p className="text-muted text-sm">No hay avisos nuevos.</p>
