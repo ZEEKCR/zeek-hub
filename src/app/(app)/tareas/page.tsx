@@ -22,7 +22,12 @@ export default async function TasksPage({
   const team = one(raw.equipo) ?? "all";
   const person = one(raw.responsable) ?? "all";
   const event = one(raw.evento) ?? "all";
-  const mine = one(raw.mias) === "1";
+  const scope = one(raw.mias);
+  const mine = scope === "1";
+  const department = scope === "dept";
+  const myTeams = [actor.teamId, ...actor.teamIds].filter((id): id is string =>
+    Boolean(id),
+  );
   const showOverdue = one(raw.vencidas) === "1";
   const today = todayKey();
   const mineKeys = assigneeKeys(
@@ -40,6 +45,8 @@ export default async function TasksPage({
     )
       return false;
     if (event !== "all" && !task.activityIds.includes(event)) return false;
+    if (department && !task.teamIds.some((id) => myTeams.includes(id)))
+      return false;
     if (mine && !task.assigneeIds.some((id) => mineKeys.includes(id)))
       return false;
     return true;
@@ -108,10 +115,11 @@ export default async function TasksPage({
           pathname="/tareas"
           search={search}
           param="mias"
-          value={mine ? "1" : "all"}
+          value={mine ? "1" : department ? "dept" : "all"}
           options={[
             { id: "all", label: "Todas" },
             { id: "1", label: "Solo mías" },
+            { id: "dept", label: "Mi departamento" },
           ]}
         />
         <QuerySelect
@@ -127,7 +135,7 @@ export default async function TasksPage({
         />
       </div>
       <KanbanBoard
-        key={`${team}:${person}:${event}:${mine ? "1" : "0"}:${showOverdue ? "1" : "0"}`}
+        key={`${team}:${person}:${event}:${scope ?? "0"}:${showOverdue ? "1" : "0"}`}
         tasks={filtered.map((task) => {
           const due = task.dueDate?.start;
           const dueDay = due ? dayKey(due) : "";

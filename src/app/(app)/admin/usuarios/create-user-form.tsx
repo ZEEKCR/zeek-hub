@@ -40,6 +40,12 @@ export function CreateUserForm({
         placeholder="Teléfono (opcional)"
         className="bg-surface-2 h-12 rounded-[14px] px-4"
       />
+      <input
+        name="jobTitle"
+        maxLength={60}
+        placeholder="Nombre de rol (opcional)"
+        className="bg-surface-2 h-12 rounded-[14px] px-4"
+      />
       {allowRole ? (
         <>
           <label htmlFor="teamId" className="grid gap-1 text-sm font-medium">

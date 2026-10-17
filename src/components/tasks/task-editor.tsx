@@ -13,17 +13,19 @@ import type { TaskStatus } from "@/server/domain/types";
 
 const field = "bg-surface-2 h-12 rounded-[14px] px-4";
 const areas: Record<string, string> = {
-  Community: "Comunidad",
-  Platform: "Plataforma",
-  Content: "Contenido",
+  Growth: "Growth",
+  Logistics: "Logística",
+  Volunteers: "Voluntarios",
+  Communications: "Comunicaciones",
   Ops: "Operaciones",
+  Technical: "Técnico",
+  Community: "Comunidad",
+  Content: "Contenido",
   Events: "Eventos",
   Services: "Servicios",
-  Growth: "Crecimiento",
-  Logistics: "Logística",
-  Blockchain: "Blockchain",
-  Volunteers: "Voluntarios",
   Partners: "Aliados",
+  Platform: "Plataforma",
+  Blockchain: "Blockchain",
 };
 
 export function TaskEditor({
@@ -125,7 +127,13 @@ export function TaskEditor({
               className={field}
             >
               <option value="">Sin área</option>
-              {TASK_AREAS.map((area) => (
+              {[
+                ...TASK_AREAS,
+                ...(task?.area &&
+                !(TASK_AREAS as readonly string[]).includes(task.area)
+                  ? [task.area]
+                  : []),
+              ].map((area) => (
                 <option key={area} value={area}>
                   {areas[area] ?? area}
                 </option>

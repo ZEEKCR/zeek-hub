@@ -1,6 +1,6 @@
 import { and, count, eq, isNull } from "drizzle-orm";
 import { isRole } from "@/server/domain/roles";
-import type { Actor, Role, Team } from "@/server/domain/types";
+import type { Actor, Role, Team, Volunteer } from "@/server/domain/types";
 import { ensureMigrated, getDb } from "@/server/db/client";
 import { account, auditLog, loginAttempts, user } from "@/server/db/schema";
 import { writeAudit } from "@/server/audit/log";
@@ -93,7 +93,13 @@ export async function buildActor(userId: string): Promise<Actor | null> {
     displayName: row.displayUsername || row.name,
     fullName: row.name,
     role: asRole(row.role),
-    teamIds: volunteer?.teamIds ?? [],
+    teamId: row.teamId,
+    jobTitle: row.jobTitle,
+    teamIds: volunteer?.teamIds?.length
+      ? volunteer.teamIds
+      : row.teamId
+        ? [row.teamId]
+        : [],
     headOfTeamIds,
     banned: row.banned,
     mustChangePassword: row.mustChangePassword,
@@ -274,6 +280,7 @@ export type ProvisionInput = {
   secondaryTeamIds?: string[];
   email?: string;
   phone?: string;
+  jobTitle?: string;
   createdBy: string | null;
   makeHead?: boolean;
 };
@@ -337,6 +344,8 @@ export async function provisionUser(
         tempPasswordExpiresAt: expires,
         notionVolunteerId: volunteerId,
         teamId: input.primaryTeamId,
+        jobTitle: input.jobTitle?.trim() || null,
+        phone: input.phone?.trim() || null,
         createdBy: input.createdBy,
         createdAt: now,
         updatedAt: now,
@@ -514,6 +523,118 @@ export async function unlockAccount(
     action: "user.unlock",
     entity: "user",
     entityId: userId,
+  });
+  return ok({ username: target.username });
+}
+
+const PHONE_PATTERN = /^[0-9+()\-\s.]{6,30}$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export type ProfileInput = {
+  teamId: string;
+  jobTitle: string;
+  email: string;
+  phone: string;
+};
+
+export async function updateAccountProfile(
+  actor: Actor,
+  userId: string,
+  input: ProfileInput,
+): Promise<Result<{ username: string }>> {
+  const target = await targetActor(userId);
+  if (!target) return err("not_found", "Usuario no encontrado.");
+  if (
+    !authorize(actor, "users.editProfile", {
+      kind: "user",
+      role: target.role,
+      teamIds: target.teamIds,
+    })
+  ) {
+    return err("forbidden", "No tiene permiso para editar este perfil.");
+  }
+  const jobTitle = input.jobTitle.trim().replace(/\s+/g, " ");
+  const email = input.email.trim().toLowerCase();
+  const phone = input.phone.trim();
+  if (!knownTeams.has(input.teamId)) {
+    return err("validation", "El departamento no existe.");
+  }
+  if (jobTitle.length > 60) {
+    return err("validation", "El nombre de rol admite hasta 60 caracteres.");
+  }
+  if (email && (!EMAIL_PATTERN.test(email) || email.length > 120)) {
+    return err("validation", "El correo no es válido.");
+  }
+  if (phone && !PHONE_PATTERN.test(phone)) {
+    return err("validation", "El teléfono no es válido.");
+  }
+  const rows = await getDb().select().from(user).where(eq(user.id, userId));
+  const row = rows[0];
+  if (!row) return err("not_found", "Usuario no encontrado.");
+  const nextEmail = email || placeholderEmail(row.username ?? target.username);
+  if (nextEmail !== row.email) {
+    const taken = await getDb()
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.email, nextEmail))
+      .limit(1);
+    if (taken[0] && taken[0].id !== userId) {
+      return err("conflict", "Ese correo ya está en uso.");
+    }
+  }
+  await getDb()
+    .update(user)
+    .set({
+      teamId: input.teamId,
+      jobTitle: jobTitle || null,
+      email: nextEmail,
+      phone: phone || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(user.id, userId));
+  if (target.volunteerId) {
+    try {
+      const repos = repositories();
+      const volunteer = await repos.volunteers.get(target.volunteerId);
+      if (volunteer) {
+        const contact = publicEmail(nextEmail);
+        const secondary = volunteer.teamIds.filter(
+          (id) => id !== volunteer.primaryTeamId && id !== input.teamId,
+        );
+        const next: Volunteer = {
+          ...volunteer,
+          primaryTeamId: input.teamId,
+          teamIds: [input.teamId, ...secondary],
+          updatedAt: new Date().toISOString(),
+        };
+        if (contact) next.email = contact;
+        else delete next.email;
+        if (phone) next.phone = phone;
+        else delete next.phone;
+        await repos.volunteers.upsert(next);
+      }
+    } catch {
+      // The account is the source of truth for the profile; Notion catches up later.
+    }
+  }
+  await writeAudit({
+    actorType: "user",
+    actorId: actor.userId,
+    action: "user.edit_profile",
+    entity: "user",
+    entityId: userId,
+    before: {
+      teamId: row.teamId,
+      jobTitle: row.jobTitle,
+      hasEmail: !isPlaceholderEmail(row.email),
+      hasPhone: Boolean(row.phone),
+    },
+    after: {
+      teamId: input.teamId,
+      jobTitle: jobTitle || null,
+      hasEmail: Boolean(email),
+      hasPhone: Boolean(phone),
+    },
   });
   return ok({ username: target.username });
 }

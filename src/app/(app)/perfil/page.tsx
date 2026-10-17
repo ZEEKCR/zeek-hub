@@ -4,11 +4,23 @@ import { redirect } from "next/navigation";
 import { formatCostaRica } from "@/lib/dates";
 import { sessionDevice } from "@/lib/session-device";
 import { readyAuth } from "@/server/auth/config";
+import { eq } from "drizzle-orm";
+import { publicEmail } from "@/server/auth/credentials";
 import { requireActor } from "@/server/auth/request";
+import { ensureMigrated, getDb } from "@/server/db/client";
+import { user } from "@/server/db/schema";
+import { INITIAL_TEAMS } from "@/server/repositories/memory/store";
 import { roleLabel } from "@/server/domain/roles";
 
 export default async function ProfilePage() {
   const actor = await requireActor();
+  await ensureMigrated();
+  const [account] = await getDb()
+    .select()
+    .from(user)
+    .where(eq(user.id, actor.userId));
+  const department = INITIAL_TEAMS.find((team) => team.id === account?.teamId);
+  const contactEmail = publicEmail(account?.email);
   const auth = await readyAuth();
   const sessions = await auth.api.listSessions({ headers: await headers() });
   const devices = new Map<string, (typeof sessions)[number]>();
@@ -32,6 +44,27 @@ export default async function ProfilePage() {
         </p>
         <p className="text-muted mt-2">@{actor.username}</p>
         <p className="mt-4 text-sm">Rol: {roleLabel(actor.role)}</p>
+        <dl className="mt-4 grid gap-1 text-sm">
+          <div className="flex gap-2">
+            <dt className="text-muted">Departamento:</dt>
+            <dd>{department?.name ?? "Sin asignar"}</dd>
+          </div>
+          <div className="flex gap-2">
+            <dt className="text-muted">Nombre de rol:</dt>
+            <dd>{account?.jobTitle || "Sin asignar"}</dd>
+          </div>
+          <div className="flex gap-2">
+            <dt className="text-muted">Correo:</dt>
+            <dd>{contactEmail ?? "Sin asignar"}</dd>
+          </div>
+          <div className="flex gap-2">
+            <dt className="text-muted">Teléfono:</dt>
+            <dd>{account?.phone || "Sin asignar"}</dd>
+          </div>
+        </dl>
+        <p className="text-muted mt-2 text-xs">
+          Un Head actualiza estos datos desde Usuarios.
+        </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Link
             href="/cambiar-contrasena"

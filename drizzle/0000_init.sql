@@ -133,3 +133,7 @@ CREATE TABLE IF NOT EXISTS "sync_state" (
 );
 --> statement-breakpoint
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "team_id" text;
+--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "job_title" text;
+--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "phone" text;

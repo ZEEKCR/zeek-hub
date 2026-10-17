@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getEnv } from "@/env";
 import { requireActor } from "@/server/auth/request";
 import { authorize } from "@/server/auth/policy";
-import { TASK_AREAS } from "@/server/catalog/options";
+import { LEGACY_AREAS, TASK_AREAS } from "@/server/catalog/options";
 import { invalidateCatalog, loadCatalog } from "@/server/catalog/load";
 import { canEditTask, canMoveTask, dayKey } from "@/server/catalog/view";
 import type { Priority, TaskStatus } from "@/server/domain/types";
@@ -27,7 +27,7 @@ const statuses = new Set<TaskStatus>([
   "done",
 ]);
 const priorities = new Set<Priority>(["P0", "P1", "P2", "P3"]);
-const areas = new Set<string>(TASK_AREAS);
+const areas = new Set<string>([...TASK_AREAS, ...LEGACY_AREAS]);
 
 function clean(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";

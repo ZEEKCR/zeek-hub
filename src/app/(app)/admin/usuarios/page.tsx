@@ -1,10 +1,12 @@
 import { CreateUserForm } from "@/app/(app)/admin/usuarios/create-user-form";
 import { ChangeRoleForm } from "@/app/(app)/admin/usuarios/change-role-form";
 import { DeleteUserForm } from "@/app/(app)/admin/usuarios/delete-user-form";
+import { ProfileForm } from "@/app/(app)/admin/usuarios/profile-form";
 import { RenameUserForm } from "@/app/(app)/admin/usuarios/rename-user-form";
 import { requireActor } from "@/server/auth/request";
 import { ensureMigrated, getDb } from "@/server/db/client";
 import { user } from "@/server/db/schema";
+import { isPlaceholderEmail } from "@/server/auth/credentials";
 import { roleLabel } from "@/server/domain/roles";
 import { INITIAL_TEAMS } from "@/server/repositories/memory/store";
 
@@ -15,6 +17,7 @@ export default async function AdminUsersPage() {
   }
   await ensureMigrated();
   const users = await getDb().select().from(user);
+  const teams = INITIAL_TEAMS.map((team) => ({ id: team.id, name: team.name }));
   return (
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
       <section>
@@ -28,6 +31,14 @@ export default async function AdminUsersPage() {
                 {item.banned ? " · inactivo" : ""}
               </p>
               <RenameUserForm userId={item.id} name={item.name} />
+              <ProfileForm
+                userId={item.id}
+                teams={teams}
+                teamId={item.teamId ?? ""}
+                jobTitle={item.jobTitle ?? ""}
+                email={isPlaceholderEmail(item.email) ? "" : item.email}
+                phone={item.phone ?? ""}
+              />
               <ChangeRoleForm
                 userId={item.id}
                 role={item.role}
@@ -41,13 +52,7 @@ export default async function AdminUsersPage() {
           ))}
         </ul>
       </section>
-      <CreateUserForm
-        teams={INITIAL_TEAMS.map((team) => ({
-          id: team.id,
-          name: team.name,
-        }))}
-        allowRole
-      />
+      <CreateUserForm teams={teams} allowRole />
     </div>
   );
 }
