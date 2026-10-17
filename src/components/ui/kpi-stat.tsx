@@ -10,14 +10,14 @@ export function KpiStat({
   direction?: "up" | "down";
 }) {
   return (
-    <div className="bg-surface-1 shadow-card min-w-36 rounded-[20px] px-4 py-3">
-      <p className="text-[clamp(2rem,4vw,3rem)] leading-none font-medium tabular-nums">
+    <div className="bg-surface-1 border-line shadow-card min-w-0 rounded-[20px] border px-4 py-3.5">
+      <p className="text-muted text-[0.8125rem] font-medium">{label}</p>
+      <p className="mt-1.5 text-[clamp(1.75rem,3.2vw,2.5rem)] leading-none font-semibold tabular-nums">
         {value}
       </p>
-      <p className="text-muted mt-2 text-[0.8125rem] font-medium">{label}</p>
       {delta ? (
         <p
-          className={`mt-3 inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+          className={`mt-2.5 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
             direction === "down"
               ? "bg-danger/15 text-danger"
               : "bg-accent text-[#161616]"

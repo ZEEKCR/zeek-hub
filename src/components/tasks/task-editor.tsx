@@ -11,7 +11,7 @@ import { TASK_AREAS } from "@/server/catalog/options";
 import { STATUS_ORDER, STATUS_LABEL } from "@/server/catalog/status";
 import type { TaskStatus } from "@/server/domain/types";
 
-const field = "bg-surface-2 h-12 rounded-[14px] px-4";
+const field = "field";
 const areas: Record<string, string> = {
   Growth: "Growth",
   Logistics: "Logística",
@@ -60,12 +60,9 @@ export function TaskEditor({
 
   return (
     <div className="grid gap-6">
-      <form
-        action={action}
-        className="bg-surface-1 grid gap-3 rounded-[28px] p-5"
-      >
+      <form action={action} className="panel grid gap-4">
         {task ? <input type="hidden" name="id" value={task.id} /> : null}
-        <label className="grid gap-1 text-sm font-medium">
+        <label className="field-label">
           Título
           <input
             name="title"
@@ -77,7 +74,7 @@ export function TaskEditor({
           />
         </label>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1 text-sm font-medium">
+          <label className="field-label">
             Estado
             <select
               name="status"
@@ -92,7 +89,7 @@ export function TaskEditor({
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-sm font-medium">
+          <label className="field-label">
             Prioridad
             <select
               name="priority"
@@ -108,7 +105,7 @@ export function TaskEditor({
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-sm font-medium">
+          <label className="field-label">
             Fecha
             <input
               name="due"
@@ -118,7 +115,7 @@ export function TaskEditor({
               className={field}
             />
           </label>
-          <label className="grid gap-1 text-sm font-medium">
+          <label className="field-label">
             Área
             <select
               name="area"
@@ -141,7 +138,7 @@ export function TaskEditor({
             </select>
           </label>
         </div>
-        <label className="grid gap-1 text-sm font-medium">
+        <label className="field-label">
           Evento
           <select
             name="activityId"
@@ -158,7 +155,7 @@ export function TaskEditor({
           </select>
         </label>
         <fieldset className="grid gap-2" disabled={locked}>
-          <legend className="text-sm font-medium">Encargados</legend>
+          <legend className="field-label mb-2">Encargados</legend>
           {people.length === 0 ? (
             <p className="text-muted text-sm">Todavía no hay cuentas.</p>
           ) : (
@@ -166,7 +163,7 @@ export function TaskEditor({
               {people.map((name) => (
                 <label
                   key={name}
-                  className="bg-surface-2 flex items-center gap-2 rounded-[14px] px-4 py-3 text-sm"
+                  className="bg-surface-2 border-line flex items-center gap-2.5 rounded-[14px] border px-3.5 py-2.5 text-sm"
                 >
                   <input
                     type="checkbox"
@@ -180,14 +177,14 @@ export function TaskEditor({
             </div>
           )}
         </fieldset>
-        <label className="grid gap-1 text-sm font-medium">
+        <label className="field-label">
           Notas
           <textarea
             name="notes"
             maxLength={2000}
             defaultValue={task?.notes ?? ""}
             disabled={locked}
-            className="bg-surface-2 min-h-28 rounded-[14px] px-4 py-3"
+            className="field"
           />
         </label>
         {state ? (
@@ -199,20 +196,17 @@ export function TaskEditor({
           <button
             type="submit"
             disabled={locked || pending}
-            className="bg-accent h-12 rounded-full px-5 font-medium text-[#161616] disabled:opacity-60"
+            className="btn btn-primary"
           >
             {pending ? "Guardando…" : "Guardar en Notion"}
           </button>
-          <Link
-            href="/tareas"
-            className="text-muted inline-flex h-12 items-center px-2"
-          >
+          <Link href="/tareas" className="btn btn-secondary">
             Volver
           </Link>
         </div>
       </form>
       {task && !locked ? (
-        <form action={trash} className="grid gap-3">
+        <form action={trash} className="panel-flat grid gap-3 p-4">
           <input type="hidden" name="id" value={task.id} />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="confirm" value="yes" required />
@@ -226,7 +220,7 @@ export function TaskEditor({
           <button
             type="submit"
             disabled={trashPending}
-            className="text-danger h-12 w-fit rounded-full px-5 font-medium disabled:opacity-60"
+            className="btn btn-danger w-fit"
           >
             {trashPending ? "Enviando…" : "Borrar tarea"}
           </button>

@@ -17,7 +17,7 @@ export function QueryChips({
 }) {
   return (
     <div
-      className="flex items-center gap-2 overflow-x-auto pb-1"
+      className="flex [scrollbar-width:thin] items-center gap-2 overflow-x-auto pb-1"
       role="radiogroup"
       aria-label={label}
     >
@@ -35,10 +35,10 @@ export function QueryChips({
             href={href}
             role="radio"
             aria-checked={active}
-            className={`focus-visible:outline-focus shrink-0 rounded-full px-4 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 ${
+            className={`focus-visible:outline-focus shrink-0 rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
               active
                 ? "bg-[#f7f7f7] text-[#161616]"
-                : "border-line text-fg border bg-transparent"
+                : "border-line text-muted hover:text-fg hover:bg-surface-2 border bg-transparent"
             }`}
           >
             {option.label}

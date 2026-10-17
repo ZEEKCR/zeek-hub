@@ -1,6 +1,10 @@
+import { Monitor } from "lucide-react";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Avatar } from "@/components/ui/avatar";
+import { PageHeader } from "@/components/ui/page-header";
+import { Panel } from "@/components/ui/panel";
 import { formatCostaRica } from "@/lib/dates";
 import { sessionDevice } from "@/lib/session-device";
 import { readyAuth } from "@/server/auth/config";
@@ -34,76 +38,92 @@ export default async function ProfilePage() {
       devices.set(label, item);
     }
   }
+  const displayName = actor.fullName || actor.displayName;
   return (
     <div className="grid gap-6">
-      <h1 className="text-4xl font-semibold">Perfil</h1>
-      <section className="bg-surface-1 rounded-[28px] p-6">
-        <p className="text-muted text-sm">Usuario</p>
-        <p className="text-2xl font-semibold">
-          {actor.fullName || actor.displayName}
-        </p>
-        <p className="text-muted mt-2">@{actor.username}</p>
-        <p className="mt-4 text-sm">Rol: {roleLabel(actor.role)}</p>
-        <dl className="mt-4 grid gap-1 text-sm">
-          <div className="flex gap-2">
-            <dt className="text-muted">Departamento:</dt>
-            <dd>{department?.name ?? "Sin asignar"}</dd>
+      <PageHeader
+        title="Perfil"
+        subtitle="Tus datos en ZEEK Hub y las sesiones abiertas."
+      />
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        <Panel>
+          <div className="flex items-center gap-4">
+            <Avatar name={displayName} size="lg" />
+            <div className="min-w-0">
+              <h2 className="truncate text-2xl font-semibold tracking-tight">
+                {displayName}
+              </h2>
+              <p className="text-muted">@{actor.username}</p>
+              <p className="mt-2 flex flex-wrap gap-1.5">
+                <span className="badge badge-violet">
+                  {roleLabel(actor.role)}
+                </span>
+                {account?.jobTitle ? (
+                  <span className="badge">{account.jobTitle}</span>
+                ) : null}
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <dt className="text-muted">Nombre de rol:</dt>
-            <dd>{account?.jobTitle || "Sin asignar"}</dd>
+          <dl className="border-line mt-5 grid gap-px overflow-hidden rounded-[16px] border sm:grid-cols-2">
+            {[
+              ["Departamento", department?.name],
+              ["Nombre de rol", account?.jobTitle],
+              ["Correo", contactEmail],
+              ["Teléfono", account?.phone],
+            ].map(([label, value]) => (
+              <div key={label} className="bg-surface-2 px-4 py-3">
+                <dt className="text-muted text-xs font-semibold">{label}</dt>
+                <dd className="mt-0.5 truncate text-sm font-medium">
+                  {value || "Sin asignar"}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-muted mt-3 text-xs">
+            Un Head actualiza estos datos desde Usuarios.
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Link href="/cambiar-contrasena" className="btn btn-primary">
+              Cambiar contraseña
+            </Link>
+            <form action={signOut}>
+              <button type="submit" className="btn btn-secondary">
+                Cerrar sesión
+              </button>
+            </form>
           </div>
-          <div className="flex gap-2">
-            <dt className="text-muted">Correo:</dt>
-            <dd>{contactEmail ?? "Sin asignar"}</dd>
-          </div>
-          <div className="flex gap-2">
-            <dt className="text-muted">Teléfono:</dt>
-            <dd>{account?.phone || "Sin asignar"}</dd>
-          </div>
-        </dl>
-        <p className="text-muted mt-2 text-xs">
-          Un Head actualiza estos datos desde Usuarios.
-        </p>
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <Link
-            href="/cambiar-contrasena"
-            className="bg-accent inline-flex h-11 items-center rounded-full px-4 font-semibold text-[#161616]"
-          >
-            Cambiar contraseña
-          </Link>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="bg-surface-2 h-11 rounded-full px-4 font-medium"
-            >
-              Cerrar sesión
+        </Panel>
+        <Panel
+          title="Sesiones activas"
+          description="Los dispositivos con tu cuenta abierta."
+        >
+          <ul className="grid gap-2.5">
+            {[...devices.entries()].map(([label, item]) => (
+              <li
+                key={label}
+                className="bg-surface-2 flex items-center gap-3 rounded-[16px] px-4 py-3 text-sm"
+              >
+                <Monitor
+                  size={18}
+                  className="text-muted shrink-0"
+                  aria-hidden
+                />
+                <span className="min-w-0">
+                  <span className="block font-semibold">{label}</span>
+                  <span className="text-muted">
+                    Vence {formatCostaRica(item.expiresAt, "d MMM yyyy, HH:mm")}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <form action={revokeOthers} className="mt-4">
+            <button type="submit" className="btn btn-secondary">
+              Cerrar las demás
             </button>
           </form>
-        </div>
-      </section>
-      <section className="bg-surface-1 rounded-[28px] p-6">
-        <h2 className="text-2xl font-semibold">Sesiones activas</h2>
-        <ul className="mt-4 grid gap-3">
-          {[...devices.entries()].map(([label, item]) => (
-            <li
-              key={label}
-              className="bg-surface-2 rounded-[20px] px-4 py-3 text-sm"
-            >
-              {label} · vence{" "}
-              {formatCostaRica(item.expiresAt, "d MMM yyyy, HH:mm")}
-            </li>
-          ))}
-        </ul>
-        <form action={revokeOthers} className="mt-4">
-          <button
-            type="submit"
-            className="bg-surface-2 h-11 rounded-full px-4 font-medium"
-          >
-            Cerrar las demás
-          </button>
-        </form>
-      </section>
+        </Panel>
+      </div>
     </div>
   );
 }

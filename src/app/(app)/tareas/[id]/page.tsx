@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
 import { TaskEditor } from "@/components/tasks/task-editor";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
@@ -32,10 +33,8 @@ export default async function TaskDetailPage({
   ].sort((left, right) => left.localeCompare(right, "es"));
 
   return (
-    <div className="grid gap-6">
-      <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
-        {task.title}
-      </h1>
+    <div className="grid max-w-3xl gap-6">
+      <PageHeader kicker="Tarea" title={task.title} />
       <TaskEditor
         locked={!canEditTask(actor, task)}
         activities={activities}

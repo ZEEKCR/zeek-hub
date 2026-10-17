@@ -11,12 +11,14 @@ import { ACTIVITY_TYPES } from "@/server/catalog/options";
 import { STAGE_LABEL, STAGE_ORDER } from "@/server/catalog/status";
 import type { ActivityStage } from "@/server/domain/types";
 
-const field = "bg-surface-2 h-12 rounded-[14px] px-4";
+const field = "field";
 
 export function ActivityEditor({
   activity,
   locked,
+  title: heading,
 }: {
+  title?: string;
   activity?: {
     id: string;
     title: string;
@@ -48,14 +50,14 @@ export function ActivityEditor({
 
   return (
     <div className="grid gap-6">
-      <form
-        action={action}
-        className="bg-surface-1 grid gap-3 rounded-[28px] p-5"
-      >
+      <form action={action} className="panel grid gap-4">
+        {heading ? (
+          <h2 className="text-lg font-semibold tracking-tight">{heading}</h2>
+        ) : null}
         {activity ? (
           <input type="hidden" name="id" value={activity.id} />
         ) : null}
-        <label className="grid gap-1 text-sm font-medium">
+        <label className="field-label">
           Título
           <input
             name="title"
@@ -67,7 +69,7 @@ export function ActivityEditor({
           />
         </label>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1 text-sm font-medium">
+          <label className="field-label">
             Tipo
             <select
               name="type"
@@ -82,7 +84,7 @@ export function ActivityEditor({
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-sm font-medium">
+          <label className="field-label">
             Etapa
             <select
               name="stage"
@@ -97,7 +99,7 @@ export function ActivityEditor({
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-sm font-medium sm:col-span-2">
+          <label className="field-label sm:col-span-2">
             Fecha
             <input
               name="date"
@@ -111,14 +113,14 @@ export function ActivityEditor({
         <p className="text-muted text-sm">
           Finalizado deja las tareas fuera del tablero. Siguen en Notion.
         </p>
-        <label className="grid gap-1 text-sm font-medium">
+        <label className="field-label">
           Notas
           <textarea
             name="notes"
             maxLength={2000}
             defaultValue={activity?.notes ?? ""}
             disabled={locked}
-            className="bg-surface-2 min-h-28 rounded-[14px] px-4 py-3"
+            className="field"
           />
         </label>
         {state ? (
@@ -130,20 +132,17 @@ export function ActivityEditor({
           <button
             type="submit"
             disabled={locked || pending}
-            className="bg-accent h-12 rounded-full px-5 font-medium text-[#161616] disabled:opacity-60"
+            className="btn btn-primary"
           >
             {pending ? "Guardando…" : "Guardar en Notion"}
           </button>
-          <Link
-            href="/eventos"
-            className="text-muted inline-flex h-12 items-center px-2"
-          >
+          <Link href="/eventos" className="btn btn-secondary">
             Volver
           </Link>
         </div>
       </form>
       {activity && !locked ? (
-        <form action={trash} className="grid gap-3">
+        <form action={trash} className="panel-flat grid gap-3 p-4">
           <input type="hidden" name="id" value={activity.id} />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="confirm" value="yes" required />
@@ -157,7 +156,7 @@ export function ActivityEditor({
           <button
             type="submit"
             disabled={trashPending}
-            className="text-danger h-12 w-fit rounded-full px-5 font-medium disabled:opacity-60"
+            className="btn btn-danger w-fit"
           >
             {trashPending ? "Enviando…" : "Borrar actividad"}
           </button>

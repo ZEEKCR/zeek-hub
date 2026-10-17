@@ -1,5 +1,7 @@
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { KanbanBoard } from "@/components/tasks/kanban-board";
+import { PageHeader } from "@/components/ui/page-header";
 import { QuerySelect } from "@/components/ui/query-select";
 import { one, searchRecord } from "@/lib/query";
 import { formatCostaRica, formatWhen } from "@/lib/dates";
@@ -54,20 +56,19 @@ export default async function TasksPage({
 
   return (
     <div className="grid gap-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
-          Tareas
-        </h1>
-        {actor.role === "admin" || actor.role === "head" ? (
-          <Link
-            href="/tareas/nueva"
-            className="bg-accent inline-flex h-12 items-center rounded-full px-5 font-medium text-[#161616]"
-          >
-            Nueva tarea
-          </Link>
-        ) : null}
-      </header>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <PageHeader
+        title="Tareas"
+        subtitle={`${filtered.length} ${filtered.length === 1 ? "tarea" : "tareas"} en esta vista. Arrastra o usa el selector para cambiar su estado.`}
+        actions={
+          actor.role === "admin" || actor.role === "head" ? (
+            <Link href="/tareas/nueva" className="btn btn-primary">
+              <Plus size={18} aria-hidden />
+              Nueva tarea
+            </Link>
+          ) : null
+        }
+      />
+      <div className="panel-flat grid gap-3 p-3 sm:grid-cols-2 sm:p-4 xl:grid-cols-5">
         <QuerySelect
           label="Equipo"
           pathname="/tareas"

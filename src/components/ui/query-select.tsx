@@ -19,10 +19,10 @@ export function QuerySelect({
 }) {
   const router = useRouter();
   return (
-    <label className="grid min-w-0 gap-1 text-sm font-medium">
+    <label className="text-muted grid min-w-0 gap-1 text-xs font-semibold">
       {label}
       <select
-        className="bg-surface-2 h-11 rounded-full px-4 text-sm"
+        className="field text-fg h-11 rounded-full px-4 text-sm font-medium"
         value={value}
         onChange={(event) => {
           const params = new URLSearchParams();

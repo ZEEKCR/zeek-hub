@@ -1,3 +1,5 @@
+import { ShieldOff } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { CreateUserForm } from "@/app/(app)/admin/usuarios/create-user-form";
 import { requireActor } from "@/server/auth/request";
 import { listDirectory } from "@/server/services/users";
@@ -5,7 +7,12 @@ import { listDirectory } from "@/server/services/users";
 export default async function NewTeamUserPage() {
   const actor = await requireActor();
   if (actor.role !== "admin") {
-    return <p>No tiene permiso para ver esta pantalla.</p>;
+    return (
+      <EmptyState
+        icon={<ShieldOff size={20} aria-hidden />}
+        title="No tiene permiso para ver esta pantalla."
+      />
+    );
   }
   const directory = await listDirectory(actor);
   return (

@@ -1,11 +1,20 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { CalendarDays, Lock } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { moveTaskAction } from "@/app/(app)/tareas/actions";
+import { Avatar } from "@/components/ui/avatar";
+import { PriorityBadge } from "@/components/ui/priority-badge";
 import { STATUS_LABEL, STATUS_ORDER } from "@/server/catalog/status";
 import type { TaskStatus } from "@/server/domain/types";
+
+const STATUS_DOT: Record<TaskStatus, string> = {
+  not_started: "bg-muted",
+  in_progress: "bg-violet",
+  blocked: "bg-danger",
+  done: "bg-accent",
+};
 
 export type BoardTask = {
   id: string;
@@ -70,7 +79,7 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
   return (
     <div className="grid gap-4">
       <div
-        className="bg-inverse flex overflow-x-auto rounded-full p-1 md:hidden"
+        className="bg-surface-1 border-line flex overflow-x-auto rounded-full border p-1 md:hidden"
         role="tablist"
         aria-label="Estado"
       >
@@ -81,10 +90,10 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
             role="tab"
             aria-selected={column.status === status}
             onClick={() => setStatus(column.status)}
-            className={`min-h-11 shrink-0 rounded-full px-3 text-sm font-medium ${
+            className={`min-h-10 shrink-0 rounded-full px-3.5 text-[0.8125rem] font-semibold ${
               column.status === status
                 ? "bg-accent text-[#161616]"
-                : "text-[#161616]"
+                : "text-muted"
             }`}
           >
             {STATUS_LABEL[column.status]} {column.tasks.length}
@@ -92,15 +101,15 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
         ))}
       </div>
       {error ? (
-        <p className="text-danger text-sm" role="alert">
+        <p className="badge badge-danger w-fit text-sm" role="alert">
           {error}
         </p>
       ) : null}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
         {columns.map((column) => (
           <section
             key={column.status}
-            className={`bg-surface-3 rounded-[28px] p-3 ${
+            className={`bg-surface-1/60 border-line rounded-[24px] border p-3 ${
               column.status === status ? "" : "hidden md:block"
             }`}
             onDragOver={(event) => event.preventDefault()}
@@ -109,13 +118,19 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
               if (id) move(id, column.status);
             }}
           >
-            <header className="sticky top-0 flex items-center justify-between px-2 py-3">
-              <h2 className="font-semibold">{STATUS_LABEL[column.status]}</h2>
-              <span className="bg-surface-1 rounded-full px-2 py-1 text-xs tabular-nums">
+            <header className="flex items-center justify-between px-2 py-2.5">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                <span
+                  aria-hidden
+                  className={`size-2.5 rounded-full ${STATUS_DOT[column.status]}`}
+                />
+                {STATUS_LABEL[column.status]}
+              </h2>
+              <span className="bg-surface-2 text-muted rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums">
                 {column.tasks.length}
               </span>
             </header>
-            <div className="grid gap-3">
+            <div className="grid gap-2.5 md:max-h-[calc(100dvh-20rem)] md:overflow-y-auto md:pr-1">
               {column.tasks.map((task) => (
                 <article
                   key={task.id}
@@ -127,35 +142,61 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
                     }
                     event.dataTransfer.setData("text/plain", task.id);
                   }}
-                  className="bg-surface-1 shadow-card rounded-[20px] p-4"
+                  className={`bg-surface-2 border-line hover:border-surface-3 rounded-[18px] border p-3 motion-safe:transition ${
+                    task.locked ? "" : "md:cursor-grab"
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold">
-                      {task.priority === "P0" || task.priority === "P1" ? (
-                        <span className="bg-danger mr-2 inline-block size-2 rounded-full" />
-                      ) : null}
-                      <Link
-                        href={`/tareas/${task.id}`}
-                        className="hover:underline"
-                      >
-                        {task.title}
-                      </Link>
-                    </h3>
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <PriorityBadge
+                        {...(task.priority ? { priority: task.priority } : {})}
+                      />
+                      <h3 className="min-w-0 text-[0.9375rem] leading-snug font-semibold">
+                        <Link
+                          href={`/tareas/${task.id}`}
+                          className="hover:underline"
+                        >
+                          {task.title}
+                        </Link>
+                      </h3>
+                    </div>
                     {task.locked ? (
-                      <Lock size={14} aria-label="Solo lectura" />
+                      <Lock
+                        size={14}
+                        className="text-muted mt-0.5 shrink-0"
+                        aria-label="Solo lectura"
+                      />
                     ) : null}
                   </div>
-                  <p className="text-muted mt-1 text-sm">
-                    {[
-                      task.meta,
-                      task.assignee !== "Sin asignar" ? task.assignee : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
+                  <p
+                    className={`mt-2 inline-flex items-center gap-1.5 text-xs font-medium ${
+                      task.meta.startsWith("Venció")
+                        ? "text-danger"
+                        : "text-muted"
+                    }`}
+                  >
+                    <CalendarDays size={13} aria-hidden />
+                    {task.meta}
                   </p>
+                  <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                    {task.assignee !== "Sin asignar" ? (
+                      <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium">
+                        <Avatar name={task.assignee} size="sm" />
+                        <span className="truncate">{task.assignee}</span>
+                      </span>
+                    ) : null}
+                    {task.team ? (
+                      <span className="badge">{task.team}</span>
+                    ) : null}
+                  </div>
+                  {task.event ? (
+                    <p className="text-violet-text mt-2 truncate text-xs font-medium">
+                      {task.event}
+                    </p>
+                  ) : null}
                   <select
                     aria-label={`Mover ${task.title}`}
-                    className="bg-surface-2 mt-3 hidden h-9 w-full rounded-full px-3 text-sm md:block"
+                    className="field mt-3 hidden h-8 min-h-8 rounded-full px-3 text-xs md:block"
                     value={task.status}
                     disabled={task.locked || pending}
                     onChange={(event) =>
@@ -170,7 +211,7 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
                   </select>
                   <button
                     type="button"
-                    className="bg-surface-2 mt-3 h-9 w-full rounded-full text-sm md:hidden"
+                    className="btn btn-secondary btn-sm mt-3 w-full md:hidden"
                     disabled={task.locked || pending}
                     onClick={() => setMovingId(task.id)}
                   >
@@ -178,6 +219,11 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
                   </button>
                 </article>
               ))}
+              {column.tasks.length === 0 ? (
+                <p className="border-line text-muted rounded-[18px] border border-dashed px-3 py-6 text-center text-xs">
+                  Sin tareas
+                </p>
+              ) : null}
             </div>
           </section>
         ))}
@@ -190,17 +236,17 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
         >
           <button
             type="button"
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/60"
             aria-label="Cerrar"
             onClick={() => setMovingId(null)}
           />
-          <div className="bg-surface-1 absolute inset-x-0 bottom-0 grid gap-2 rounded-t-[28px] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="bg-surface-1 border-line absolute inset-x-0 bottom-0 grid gap-2 rounded-t-[28px] border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <p className="px-2 py-1 font-semibold">Mover a</p>
             {STATUS_ORDER.map((option) => (
               <button
                 key={option}
                 type="button"
-                className="bg-surface-2 h-11 rounded-full text-sm font-medium"
+                className="btn btn-secondary"
                 disabled={pending}
                 onClick={() => {
                   move(movingId, option);

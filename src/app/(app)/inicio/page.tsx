@@ -1,6 +1,11 @@
 import Link from "next/link";
+import { ListChecks } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { HeroGradientCard } from "@/components/ui/hero-gradient-card";
 import { KpiStat } from "@/components/ui/kpi-stat";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { Panel } from "@/components/ui/panel";
 import { QueryChips } from "@/components/ui/query-chips";
 import { ScheduleBar } from "@/components/ui/schedule-bar";
 import { TaskCard } from "@/components/ui/task-card";
@@ -125,7 +130,7 @@ export default async function HomePage({
   ].filter(Boolean);
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <ScheduleBar
         dateLabel={formatCostaRica(new Date(), "d MMM")}
         emptyLabel={
@@ -135,28 +140,28 @@ export default async function HomePage({
         }
         items={agenda}
       />
-      <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold tracking-tight">
-        Hola, {actor.fullName || actor.displayName}
-      </h1>
+      <PageHeader
+        kicker={formatCostaRica(new Date(), "EEEE d MMMM")}
+        title={`Hola, ${actor.fullName || actor.displayName}`}
+        subtitle="Esto es lo que tienes pendiente y lo que viene en el calendario."
+      />
       {catalog.connected ? null : (
-        <p className="text-muted">
+        <Notice>
           {catalog.notice ??
             "Notion todavía no está conectado en este entorno."}
-        </p>
+        </Notice>
       )}
       {nameUnmatched ? (
-        <p className="text-muted">
+        <Notice>
           «{actor.fullName}» no aparece en la columna Encargado de ninguna
           tarea. Si te asignaron tareas y no las ves, pide a un admin que
           corrija tu nombre en Usuarios.
-        </p>
+        </Notice>
       ) : null}
       {linked ? null : (
-        <p className="text-muted">
-          Esta cuenta no está enlazada a una persona de Notion.
-        </p>
+        <Notice>Esta cuenta no está enlazada a una persona de Notion.</Notice>
       )}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiStat
           label="Mis tareas abiertas"
           value={String(open.length)}
@@ -170,78 +175,89 @@ export default async function HomePage({
           {...(doneWeek > 0 ? { delta: `${doneWeek} esta semana` } : {})}
         />
       </div>
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
-        {next ? (
-          <Link href={`/eventos/${next.id}`}>
-            <HeroGradientCard kicker="Próximo evento" value={next.title}>
-              <p className="text-sm text-white/80">
-                {next.start
-                  ? `${countdown(next.start)} · ${formatWhen(next.start, next.timed, "EEEE d MMM, HH:mm", "EEEE d MMM")} · `
-                  : ""}
-                avance {view.taskProgress(next.id)}%
-              </p>
-            </HeroGradientCard>
-          </Link>
-        ) : null}
-        <section className="bg-surface-1 rounded-[28px] p-5">
-          <h2 className="text-2xl font-semibold">Avisos</h2>
-          {notices.length === 0 ? (
-            <p className="text-muted mt-3">No hay avisos nuevos.</p>
-          ) : (
-            <ul className="mt-3 grid gap-2">
-              {notices.map((notice) => (
-                <li key={notice} className="text-sm">
-                  {notice}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
-      <section className="grid gap-4">
-        <h2 className="text-2xl font-semibold">Mis tareas de hoy</h2>
-        <QueryChips
-          label="Filtro de tareas"
-          pathname="/inicio"
-          search={search}
-          param="filtro"
-          value={filter}
-          options={[
-            { id: "all", label: "Todas" },
-            { id: "late", label: "Vencidas" },
-            { id: "today", label: "Hoy" },
-            { id: "progress", label: "En progreso" },
-          ]}
-        />
-        <div className="grid gap-4 md:grid-cols-2">
-          {visible.map((task, index) => (
-            <TaskCard
-              key={task.id}
-              title={task.title}
-              meta={
-                task.dueDate?.start
-                  ? formatWhen(
-                      task.dueDate.start,
-                      task.dueDate.timed,
-                      "d MMM, HH:mm",
-                      "d MMM",
-                    )
-                  : "Sin fecha"
-              }
-              assignee={view.personName(task.assigneeIds[0] ?? "")}
-              team={view.teamName(task.teamIds[0] ?? "")}
-              event={view.activityTitle(task.activityIds[0] ?? "")}
-              status={task.status}
-              {...(task.priority ? { priority: task.priority } : {})}
-              active={index === 0}
-              href="/tareas"
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+        <Panel
+          title="Mis tareas de hoy"
+          description="Ordenadas por urgencia y prioridad."
+        >
+          <div className="grid gap-4">
+            <QueryChips
+              label="Filtro de tareas"
+              pathname="/inicio"
+              search={search}
+              param="filtro"
+              value={filter}
+              options={[
+                { id: "all", label: "Todas" },
+                { id: "late", label: "Vencidas" },
+                { id: "today", label: "Hoy" },
+                { id: "progress", label: "En progreso" },
+              ]}
             />
-          ))}
+            <div className="grid gap-3">
+              {visible.map((task, index) => (
+                <TaskCard
+                  key={task.id}
+                  title={task.title}
+                  meta={
+                    task.dueDate?.start
+                      ? formatWhen(
+                          task.dueDate.start,
+                          task.dueDate.timed,
+                          "d MMM, HH:mm",
+                          "d MMM",
+                        )
+                      : "Sin fecha"
+                  }
+                  assignee={view.personName(task.assigneeIds[0] ?? "")}
+                  team={view.teamName(task.teamIds[0] ?? "")}
+                  event={view.activityTitle(task.activityIds[0] ?? "")}
+                  status={task.status}
+                  {...(task.priority ? { priority: task.priority } : {})}
+                  active={index === 0}
+                  href="/tareas"
+                />
+              ))}
+            </div>
+            {visible.length === 0 ? (
+              <EmptyState
+                icon={<ListChecks size={20} aria-hidden />}
+                title="No hay tareas en este filtro."
+              />
+            ) : null}
+          </div>
+        </Panel>
+        <div className="grid gap-6">
+          {next ? (
+            <Link href={`/eventos/${next.id}`} className="block">
+              <HeroGradientCard kicker="Próximo evento" value={next.title}>
+                <p className="text-sm text-white/80">
+                  {next.start
+                    ? `${countdown(next.start)} · ${formatWhen(next.start, next.timed, "EEEE d MMM, HH:mm", "EEEE d MMM")} · `
+                    : ""}
+                  avance {view.taskProgress(next.id)}%
+                </p>
+              </HeroGradientCard>
+            </Link>
+          ) : null}
+          <Panel title="Avisos">
+            {notices.length === 0 ? (
+              <p className="text-muted text-sm">No hay avisos nuevos.</p>
+            ) : (
+              <ul className="grid gap-2.5">
+                {notices.map((notice) => (
+                  <li
+                    key={notice}
+                    className="bg-surface-2 rounded-[14px] px-3.5 py-2.5 text-sm"
+                  >
+                    {notice}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
         </div>
-        {visible.length === 0 ? (
-          <p className="text-muted">No hay tareas en este filtro.</p>
-        ) : null}
-      </section>
+      </div>
     </div>
   );
 }
