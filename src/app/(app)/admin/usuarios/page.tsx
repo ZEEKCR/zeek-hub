@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { CreateUserForm } from "@/app/(app)/admin/usuarios/create-user-form";
 import { ChangeRoleForm } from "@/app/(app)/admin/usuarios/change-role-form";
 import { DeleteUserForm } from "@/app/(app)/admin/usuarios/delete-user-form";
+import { ResetPasswordForm } from "@/app/(app)/admin/usuarios/reset-password-form";
 import { ProfileForm } from "@/app/(app)/admin/usuarios/profile-form";
 import { RenameUserForm } from "@/app/(app)/admin/usuarios/rename-user-form";
 import { requireActor } from "@/server/auth/request";
@@ -94,6 +95,19 @@ export default async function AdminUsersPage() {
                         jobTitle={item.jobTitle ?? ""}
                         email={isPlaceholderEmail(item.email) ? "" : item.email}
                         phone={item.phone ?? ""}
+                      />
+                    </section>
+                    <section className="grid gap-1">
+                      <h3 className="eyebrow">Contraseña</h3>
+                      <ResetPasswordForm
+                        userId={item.id}
+                        person={{
+                          name: item.name,
+                          username: item.username ?? "",
+                          department: department?.name ?? "ZEEK",
+                          ...(item.jobTitle ? { jobTitle: item.jobTitle } : {}),
+                        }}
+                        disabled={item.id === actor.userId}
                       />
                     </section>
                     <section className="border-line grid gap-1 border-t pt-4">
