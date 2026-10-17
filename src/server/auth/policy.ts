@@ -19,6 +19,8 @@ export type Action =
   | "resources.viewCore"
   | "resources.create"
   | "birthdays.edit"
+  | "events.rsvp"
+  | "events.manage"
   | "reports.create"
   | "reports.manage"
   | "admin.sync"
@@ -83,11 +85,14 @@ export function authorize(
       return actor.role === "head" || actor.role === "admin";
     case "resources.create":
       return actor.role === "admin";
+    case "events.rsvp":
     case "birthdays.edit":
     case "reports.create":
       return true;
     case "reports.manage":
       return actor.role === "admin";
+    case "events.manage":
+      return isLead(actor);
     default:
       return false;
   }
@@ -111,6 +116,8 @@ export const POLICY_ACTIONS: Action[] = [
   "resources.viewCore",
   "resources.create",
   "birthdays.edit",
+  "events.rsvp",
+  "events.manage",
   "reports.create",
   "reports.manage",
   "admin.sync",

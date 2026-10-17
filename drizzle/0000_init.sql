@@ -156,3 +156,31 @@ CREATE TABLE IF NOT EXISTS "reports" (
   "resolved_at" timestamptz,
   "resolved_by" text
 );
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "event_rsvps" (
+  "activity_id" text NOT NULL,
+  "user_id" text NOT NULL,
+  "status" text NOT NULL,
+  "updated_at" timestamptz NOT NULL,
+  PRIMARY KEY ("activity_id", "user_id")
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "event_shifts" (
+  "id" text PRIMARY KEY,
+  "activity_id" text NOT NULL,
+  "title" text NOT NULL,
+  "starts_at" timestamptz NOT NULL,
+  "ends_at" timestamptz NOT NULL,
+  "capacity" integer NOT NULL,
+  "created_by" text,
+  "created_at" timestamptz NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "shift_signups" (
+  "shift_id" text NOT NULL,
+  "user_id" text NOT NULL,
+  "created_at" timestamptz NOT NULL,
+  PRIMARY KEY ("shift_id", "user_id")
+);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "event_shifts_activity_idx" ON "event_shifts" ("activity_id");

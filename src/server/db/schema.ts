@@ -3,6 +3,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
@@ -186,3 +187,47 @@ export const reports = pgTable("reports", {
   resolvedAt: timestamp("resolved_at", { withTimezone: true, mode: "date" }),
   resolvedBy: text("resolved_by"),
 });
+
+export const eventRsvps = pgTable(
+  "event_rsvps",
+  {
+    activityId: text("activity_id").notNull(),
+    userId: text("user_id").notNull(),
+    status: text("status").notNull(),
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+      mode: "date",
+    }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.activityId, table.userId] })],
+);
+
+export const eventShifts = pgTable("event_shifts", {
+  id: text("id").primaryKey(),
+  activityId: text("activity_id").notNull(),
+  title: text("title").notNull(),
+  startsAt: timestamp("starts_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true, mode: "date" }).notNull(),
+  capacity: integer("capacity").notNull(),
+  createdBy: text("created_by"),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+});
+
+export const shiftSignups = pgTable(
+  "shift_signups",
+  {
+    shiftId: text("shift_id").notNull(),
+    userId: text("user_id").notNull(),
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+      mode: "date",
+    }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.shiftId, table.userId] })],
+);
