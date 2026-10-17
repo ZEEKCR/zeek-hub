@@ -126,3 +126,34 @@ export async function createResourcePage(
   );
   return created.id;
 }
+
+/**
+ * Turns a failure from `createResourcePage` into a message an admin can act
+ * on. Notion's own text is only appended for validation errors, which name
+ * the offending column and never contain secrets.
+ */
+export function describeResourceError(error: unknown) {
+  const message = error instanceof Error ? error.message : "";
+  const missing = /^Missing (NOTION_\w+)$/.exec(message);
+  if (missing) {
+    return `Falta la variable ${missing[1]} en el entorno (Vercel → Settings → Environment Variables).`;
+  }
+  const code =
+    typeof error === "object" && error && "code" in error
+      ? String((error as { code: unknown }).code)
+      : "";
+  switch (code) {
+    case "unauthorized":
+      return "El token de Notion no es válido. Revisa NOTION_ZEEK_TOKEN.";
+    case "restricted_resource":
+      return "La integración de Notion no tiene permiso para insertar contenido en la base Recursos. Actívalo en la integración.";
+    case "object_not_found":
+      return "La integración de Notion no ve la base Recursos. Compártela con la integración (Conexiones) o revisa NOTION_DS_RESOURCES.";
+    case "validation_error":
+      return `Notion rechazó el recurso: ${message.slice(0, 200)}`;
+    case "rate_limited":
+      return "Notion está limitando las peticiones. Intenta de nuevo en un minuto.";
+    default:
+      return "No se pudo guardar el recurso en Notion.";
+  }
+}
