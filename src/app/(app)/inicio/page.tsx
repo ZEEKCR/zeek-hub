@@ -16,6 +16,7 @@ import {
   formatWhen,
   shiftCostaRicaDay,
 } from "@/lib/dates";
+import { greeting, firstName } from "@/lib/greeting";
 import { one, searchRecord } from "@/lib/query";
 import { requireActor } from "@/server/auth/request";
 import {
@@ -151,7 +152,7 @@ export default async function HomePage({
       />
       <PageHeader
         kicker={formatCostaRica(new Date(), "EEEE d MMMM")}
-        title={`Hola, ${actor.fullName || actor.displayName}`}
+        title={`${greeting(new Date())}, ${firstName(actor.fullName || actor.displayName)}`}
         subtitle="Esto es lo que tienes pendiente y lo que viene en el calendario."
       />
       <BirthdayBanner people={birthdaysToday} selfId={actor.userId} />

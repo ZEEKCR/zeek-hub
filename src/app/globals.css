@@ -306,6 +306,12 @@ body::before {
     animation: pop 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
     transform-origin: bottom center;
   }
+  .toast-pop {
+    animation: toast 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .celebrate {
+    animation: celebrate 1.1s ease-out both;
+  }
   .float {
     animation: float 3.2s ease-in-out infinite;
   }
@@ -361,6 +367,29 @@ body::before {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+@keyframes toast {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes celebrate {
+  0% {
+    box-shadow: 0 0 0 0 rgb(1 229 118 / 0.55);
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 0 18px rgb(1 229 118 / 0);
+    transform: scale(1);
   }
 }
 @keyframes float {
