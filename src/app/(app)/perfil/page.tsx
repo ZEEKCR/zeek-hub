@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { formatCostaRica } from "@/lib/dates";
 import { sessionDevice } from "@/lib/session-device";
 import { readyAuth } from "@/server/auth/config";
@@ -30,12 +31,22 @@ export default async function ProfilePage() {
         </p>
         <p className="text-muted mt-2">@{actor.username}</p>
         <p className="mt-4 text-sm">Rol: {actor.role}</p>
-        <Link
-          href="/cambiar-contrasena"
-          className="bg-accent mt-6 inline-flex h-11 items-center rounded-full px-4 font-semibold text-[#161616]"
-        >
-          Cambiar contraseña
-        </Link>
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <Link
+            href="/cambiar-contrasena"
+            className="bg-accent inline-flex h-11 items-center rounded-full px-4 font-semibold text-[#161616]"
+          >
+            Cambiar contraseña
+          </Link>
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="bg-surface-2 h-11 rounded-full px-4 font-medium"
+            >
+              Cerrar sesión
+            </button>
+          </form>
+        </div>
       </section>
       <section className="bg-surface-1 rounded-[28px] p-6">
         <h2 className="text-2xl font-semibold">Sesiones activas</h2>
@@ -67,4 +78,11 @@ async function revokeOthers() {
   "use server";
   const auth = await readyAuth();
   await auth.api.revokeOtherSessions({ headers: await headers() });
+}
+
+async function signOut() {
+  "use server";
+  const auth = await readyAuth();
+  await auth.api.signOut({ headers: await headers() });
+  redirect("/login");
 }
