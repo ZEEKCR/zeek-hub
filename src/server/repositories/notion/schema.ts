@@ -72,6 +72,7 @@ export const notionSchema = {
       areaLegacy: "Area",
       due: "Due Date",
       responsible: "Responsable",
+      encargado: "Encargado",
       team: "Equipo",
       start: "Fecha inicio",
       updatedByApp: "Actualizado por app",

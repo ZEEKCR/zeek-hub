@@ -1,16 +1,8 @@
+import { foldName as fold } from "@/server/domain/assignee";
+
 export type NamedPerson = { id: string; name: string };
 
 export type CollapsedPerson = NamedPerson & { aliasIds: string[] };
-
-function fold(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9@.\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function isEmail(value: string) {
   return value.includes("@");

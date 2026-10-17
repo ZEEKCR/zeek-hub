@@ -11,6 +11,7 @@ import type {
   Volunteer,
   VolunteerStatus,
 } from "@/server/domain/types";
+import { assigneeToken } from "@/server/domain/assignee";
 import { notionSchema } from "@/server/repositories/notion/schema";
 
 const volunteerSchema = z.object({
@@ -139,6 +140,14 @@ function peopleOf(property: Property | undefined): NotionPerson[] {
     if (!person.id || person.type === "bot") return [];
     return [{ id: person.id, name: person.name?.trim() || "Sin nombre" }];
   });
+}
+
+function optionNames(property: Property | undefined) {
+  const names = [
+    ...(property?.multi_select ?? []).map((option) => option.name),
+    ...(property?.select?.name ? [property.select.name] : []),
+  ];
+  return names.map((name) => name.trim()).filter(Boolean);
 }
 
 function dateValue(value: string | null | undefined) {
@@ -301,6 +310,10 @@ export function mapTaskPage(page: {
   const people = [
     ...peopleOf(properties[names.assigneeLegacy]),
     ...peopleOf(properties[names.responsible]),
+    ...optionNames(properties[names.encargado]).map((name) => ({
+      id: assigneeToken(name),
+      name,
+    })),
   ];
   const assigneeIds = [
     ...new Set([

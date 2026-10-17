@@ -36,7 +36,11 @@ export default async function HomePage({
   const search = searchRecord(raw);
   const filter = one(raw.filtro) ?? "all";
   const today = todayKey();
-  const assigneeIds = assigneeKeys(actor.volunteerId, actor.notionUserId);
+  const assigneeIds = assigneeKeys(
+    actor.volunteerId,
+    actor.notionUserId,
+    actor.fullName,
+  );
   const linked = assigneeIds.length > 0;
   const mine = tasksAssignedTo(tasks, assigneeIds);
   const focus = mine.filter((task) => isTodayOrOverdue(task, today));
