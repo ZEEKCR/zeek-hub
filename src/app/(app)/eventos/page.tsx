@@ -13,6 +13,12 @@ import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
 import { dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { STAGE_LABEL } from "@/server/catalog/status";
+import {
+  activityKindLabel,
+  compareProjects,
+  isOpenProject,
+  isProject,
+} from "@/server/domain/projects";
 
 export default async function EventsPage({
   searchParams,
@@ -26,18 +32,30 @@ export default async function EventsPage({
   const search = searchRecord(raw);
   const scope = one(raw.alcance) ?? "proximos";
   const today = todayKey();
-  const events = view
-    .publishedActivities()
-    .filter((activity) => {
-      if (!activity.start) return scope !== "pasados";
-      const day = dayKey(activity.start);
-      if (scope === "pasados") return day < today;
-      return day >= today;
-    })
-    .sort((left, right) => (left.start ?? "").localeCompare(right.start ?? ""));
-  const next = view
-    .publishedActivities()
-    .filter((activity) => activity.start && dayKey(activity.start) >= today)
+  const published = view.publishedActivities();
+  const projectsScope = scope === "proyectos";
+  const events = projectsScope
+    ? published.filter(isOpenProject).sort(compareProjects)
+    : published
+        .filter((activity) => {
+          if (isProject(activity)) {
+            return scope === "pasados" && activity.stage === "finished";
+          }
+          if (!activity.start) return scope !== "pasados";
+          const day = dayKey(activity.start);
+          if (scope === "pasados") return day < today;
+          return day >= today;
+        })
+        .sort((left, right) =>
+          (left.start ?? "").localeCompare(right.start ?? ""),
+        );
+  const next = published
+    .filter(
+      (activity) =>
+        !isProject(activity) &&
+        activity.start &&
+        dayKey(activity.start) >= today,
+    )
     .sort((left, right) =>
       (left.start ?? "").localeCompare(right.start ?? ""),
     )[0];
@@ -45,11 +63,13 @@ export default async function EventsPage({
   return (
     <div className="grid gap-6">
       <PageHeader
-        title="Eventos"
+        title={projectsScope ? "Proyectos" : "Eventos"}
         subtitle={
-          scope === "pasados"
-            ? "Eventos que ya ocurrieron."
-            : "Lo que viene, con su avance y su equipo."
+          projectsScope
+            ? "Trabajo en curso que no depende de una fecha, con su avance y su equipo."
+            : scope === "pasados"
+              ? "Eventos y proyectos que ya terminaron."
+              : "Lo que viene, con su avance y su equipo."
         }
         actions={
           actor.role === "admin" ? (
@@ -68,6 +88,7 @@ export default async function EventsPage({
         value={scope}
         options={[
           { id: "proximos", label: "Próximos" },
+          { id: "proyectos", label: "Proyectos" },
           { id: "pasados", label: "Pasados" },
         ]}
       />
@@ -112,7 +133,7 @@ export default async function EventsPage({
               </span>
               {activity.kind ? (
                 <span className="text-xs font-medium opacity-70">
-                  {activity.kind}
+                  {activityKindLabel(activity.kind)}
                   {activity.format ? ` · ${activity.format}` : ""}
                 </span>
               ) : null}
@@ -130,7 +151,9 @@ export default async function EventsPage({
                       "d MMM, HH:mm",
                       "d MMM",
                     )
-                  : "Sin fecha"}
+                  : projectsScope
+                    ? "Sin fecha meta"
+                    : "Sin fecha"}
               </span>
               {activity.place ? (
                 <span className="inline-flex items-center gap-1.5">
@@ -139,6 +162,11 @@ export default async function EventsPage({
                 </span>
               ) : null}
             </p>
+            {projectsScope ? (
+              <div className="mt-4">
+                <ProgressBar value={view.taskProgress(activity.id)} />
+              </div>
+            ) : null}
             <div className="mt-4 flex items-center justify-between gap-3">
               <AvatarStack
                 names={activity.volunteerIds.map((id) => view.personName(id))}
@@ -153,11 +181,17 @@ export default async function EventsPage({
       {events.length === 0 ? (
         <EmptyState
           icon={<CalendarDays size={20} aria-hidden />}
-          title="No hay eventos en esta vista."
+          title={
+            projectsScope
+              ? "No hay proyectos activos."
+              : "No hay eventos en esta vista."
+          }
           hint={
-            scope === "pasados"
-              ? "Aquí aparecerán los eventos que ya ocurrieron."
-              : "Cuando se publique un evento nuevo aparecerá aquí."
+            projectsScope
+              ? "Crea una actividad de tipo Proyecto y aparecerá aquí."
+              : scope === "pasados"
+                ? "Aquí aparecerán los eventos y proyectos que ya terminaron."
+                : "Cuando se publique un evento nuevo aparecerá aquí."
           }
         />
       ) : null}

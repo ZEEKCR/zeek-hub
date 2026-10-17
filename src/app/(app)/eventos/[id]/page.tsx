@@ -1,3 +1,4 @@
+import { activityKindLabel, isProject } from "@/server/domain/projects";
 import {
   ArrowLeft,
   CalendarDays,
@@ -63,7 +64,7 @@ export default async function EventDetailPage({
             {STAGE_LABEL[activity.stage]}
           </span>
           {activity.kind ? (
-            <span className="badge">{activity.kind}</span>
+            <span className="badge">{activityKindLabel(activity.kind)}</span>
           ) : null}
         </div>
         <h1 className="text-3xl leading-tight font-semibold tracking-tight md:text-5xl">
@@ -79,7 +80,9 @@ export default async function EventDetailPage({
                   "d MMM yyyy, HH:mm",
                   "d MMM yyyy",
                 )
-              : "Sin fecha"}
+              : isProject(activity)
+                ? "Sin fecha meta"
+                : "Sin fecha"}
           </span>
           {activity.place ? (
             <span className="inline-flex items-center gap-2">
@@ -114,7 +117,9 @@ export default async function EventDetailPage({
           <KpiStat label="Voluntarios" value={String(names.length)} />
         </div>
         <div className="panel-flat flex flex-col justify-center gap-3 px-4 py-3.5">
-          <p className="eyebrow">Avance del evento</p>
+          <p className="eyebrow">
+            {isProject(activity) ? "Avance del proyecto" : "Avance del evento"}
+          </p>
           <ProgressBar value={view.taskProgress(activity.id)} />
           <AvatarStack names={names} />
         </div>

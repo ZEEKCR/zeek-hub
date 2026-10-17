@@ -27,6 +27,7 @@ import { loadCatalog } from "@/server/catalog/load";
 import { dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { isArchivedTask } from "@/server/catalog/archive";
 import { assigneeToken } from "@/server/domain/assignee";
+import { isProject } from "@/server/domain/projects";
 import { listUpcomingBirthdays } from "@/server/services/birthdays";
 
 export default async function HomePage({
@@ -84,7 +85,12 @@ export default async function HomePage({
   ).length;
   const upcoming = view
     .publishedActivities()
-    .filter((activity) => activity.start && dayKey(activity.start) >= today)
+    .filter(
+      (activity) =>
+        !isProject(activity) &&
+        activity.start &&
+        dayKey(activity.start) >= today,
+    )
     .sort((left, right) => (left.start ?? "").localeCompare(right.start ?? ""));
   const next = upcoming[0];
   const agenda = [

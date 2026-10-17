@@ -21,6 +21,7 @@ export const LEGACY_AREAS = [
 
 export const ACTIVITY_TYPES = [
   { id: "Event", label: "Evento" },
+  { id: "Project", label: "Proyecto" },
   { id: "Meeting", label: "Reunión" },
   { id: "Deadline", label: "Fecha límite" },
   { id: "Workshop", label: "Taller" },
