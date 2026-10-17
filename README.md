@@ -49,6 +49,14 @@ En la base los roles se guardan como `admin`, `head` y `volunteer`; en la app se
 
 Un Head no puede cambiar ni eliminar su propia cuenta, y siempre debe quedar al menos un Head activo.
 
+## Recursos y archivos
+
+Un Head puede crear recursos desde la app, en **Recursos → Nuevo recurso**: con un enlace https o subiendo un archivo (PDF, Office, imágenes, texto o ZIP, hasta 25 MB). El recurso se crea en la base Recursos de Notion con título, tipo, equipo, etiquetas y visibilidad, igual que si se hubiera creado allá. Requiere `NOTION_MODE=live`.
+
+Los archivos se guardan en **Vercel Blob**. Para activarlo, crea un Blob store en Vercel (Storage) y conéctalo al proyecto: Vercel agrega `BLOB_READ_WRITE_TOKEN` solo. Sin esa variable, la subida de archivos responde con un aviso, pero los recursos por enlace siguen funcionando.
+
+Los archivos subidos tienen un enlace público difícil de adivinar. La visibilidad «Solo Head y Lead» oculta el recurso dentro de la app, pero no protege el archivo si alguien tiene el enlace: no subas documentos sensibles.
+
 ## Seed de admins
 
 El seed se corre a mano, fuera de CI, y solo si `SEED_USERS` está definido. Imprime cada contraseña temporal una sola vez en esa consola. `pnpm db:migrate`, `pnpm notion:setup` y `pnpm seed:admins` leen `.env` solos.

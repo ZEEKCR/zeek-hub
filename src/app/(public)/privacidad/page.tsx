@@ -1,13 +1,18 @@
+import Image from "next/image";
 import { acceptPrivacyAction } from "@/app/(public)/privacidad/actions";
 
 export default function PrivacyPage() {
   return (
     <main className="bg-bg grid min-h-dvh place-items-center px-4">
       <article className="bg-surface-1 border-line shadow-card w-full max-w-2xl rounded-[32px] border p-6 sm:p-8">
-        <p className="flex items-center gap-2 text-sm font-bold tracking-[0.2em]">
-          ZEEK
-          <span className="bg-accent h-1 w-6 rounded-full" />
-        </p>
+        <Image
+          src="/brand/zeek-logo.png"
+          alt="ZEEK"
+          width={960}
+          height={349}
+          priority
+          className="h-10 w-auto"
+        />
         <h1 className="mt-4 text-4xl font-semibold">Aviso de privacidad</h1>
         <p className="text-muted mt-4 text-base leading-7">
           ZEEK Hub guarda nombre, usuario, correo opcional, teléfono opcional,

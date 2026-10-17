@@ -6,7 +6,7 @@ test("login page is reachable and has no serious axe violations", async ({
 }) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
-  await expect(page.getByText("ZEEK")).toBeVisible();
+  await expect(page.getByRole("img", { name: "ZEEK" })).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   const serious = results.violations.filter(
     (violation) =>
