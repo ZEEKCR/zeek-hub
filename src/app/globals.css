@@ -299,8 +299,13 @@ body::before {
   }
 
   /* Motion: short, soft, and off for people who ask for less. */
+  /*
+   * Entrance animations use "backwards", not "both": a finished animation that
+   * keeps its last transform makes the element the containing block of any
+   * fixed child (iOS Safari then pinned bottom sheets to the end of the page).
+   */
   .rise {
-    animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
   .pop {
     animation: pop 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -316,7 +321,7 @@ body::before {
     animation: float 3.2s ease-in-out infinite;
   }
   .page-enter > * > * {
-    animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
   .page-enter > * > *:nth-child(2) {
     animation-delay: 50ms;
