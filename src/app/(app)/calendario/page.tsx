@@ -1,4 +1,8 @@
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { Panel } from "@/components/ui/panel";
 import { QueryChips } from "@/components/ui/query-chips";
 import {
   clockLabel,
@@ -125,29 +129,44 @@ export default async function CalendarPage({
 
   return (
     <div className="grid gap-6">
-      <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
-        Calendario
-      </h1>
-      <QueryChips
-        label="Vista"
-        pathname="/calendario"
-        search={{ ...search, mes: month, dia: selected }}
-        param="vista"
-        value={view}
-        options={[
-          { id: "mes", label: "Mes" },
-          { id: "semana", label: "Semana" },
-          { id: "lista", label: "Lista" },
-        ]}
+      <PageHeader
+        title="Calendario"
+        subtitle="Eventos y fechas de entrega en un solo lugar."
       />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <QueryChips
+          label="Vista"
+          pathname="/calendario"
+          search={{ ...search, mes: month, dia: selected }}
+          param="vista"
+          value={view}
+          options={[
+            { id: "mes", label: "Mes" },
+            { id: "semana", label: "Semana" },
+            { id: "lista", label: "Lista" },
+          ]}
+        />
+        <p className="text-muted flex items-center gap-4 text-xs font-medium">
+          <span className="flex items-center gap-1.5">
+            <span className="bg-violet size-2.5 rounded-full" />
+            Evento
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="bg-surface-3 size-2.5 rounded-full" />
+            Tarea
+          </span>
+        </p>
+      </div>
       {view !== "mes" ? (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {strip.map((day) => (
             <Link
               key={day}
               href={href({ dia: day })}
-              className={`grid h-14 min-w-12 shrink-0 place-items-center rounded-full px-3 text-sm font-medium ${
-                day === selected ? "bg-accent text-[#161616]" : "bg-surface-1"
+              className={`grid h-14 min-w-14 shrink-0 place-items-center rounded-2xl px-3 text-sm font-semibold capitalize ${
+                day === selected
+                  ? "bg-accent text-[#161616]"
+                  : "bg-surface-1 border-line border"
               }`}
             >
               {formatCostaRica(`${day}T18:00:00Z`, "EEE d")}
@@ -158,28 +177,30 @@ export default async function CalendarPage({
         <div className="flex items-center justify-between gap-3">
           <Link
             href={href({ mes: shiftCostaRicaMonth(month, -1) })}
-            className="bg-surface-2 grid h-11 place-items-center rounded-full px-4 text-sm font-medium"
+            className="btn btn-secondary btn-sm"
           >
+            <ChevronLeft size={16} aria-hidden />
             Anterior
           </Link>
-          <p className="text-lg font-semibold capitalize">
+          <p className="text-xl font-semibold capitalize">
             {formatCostaRica(`${month}-01T18:00:00Z`, "MMMM yyyy")}
           </p>
           <Link
             href={href({ mes: shiftCostaRicaMonth(month, 1) })}
-            className="bg-surface-2 grid h-11 place-items-center rounded-full px-4 text-sm font-medium"
+            className="btn btn-secondary btn-sm"
           >
             Siguiente
+            <ChevronRight size={16} aria-hidden />
           </Link>
         </div>
       )}
-      <div className="grid items-start gap-4 lg:grid-cols-[1fr_20rem]">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
         {view === "mes" ? (
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
             {["L", "M", "X", "J", "V", "S", "D"].map((label, index) => (
               <p
                 key={`${label}-${index}`}
-                className="text-muted text-center text-xs"
+                className="text-muted pb-1 text-center text-xs font-semibold"
               >
                 {label}
               </p>
@@ -189,47 +210,67 @@ export default async function CalendarPage({
                 ? `${month}-${String(day).padStart(2, "0")}`
                 : `empty-${index}`;
               const items = dated.filter((item) => item.day === key);
+              if (!day) return <div key={key} aria-hidden />;
               return (
                 <div
                   key={key}
-                  className={`bg-surface-1 min-h-24 rounded-[20px] p-2 ${
-                    key === selected ? "ring-accent ring-2" : ""
+                  className={`border-line min-h-16 rounded-2xl border p-1.5 sm:min-h-28 sm:p-2 ${
+                    key === selected
+                      ? "bg-surface-2 ring-accent ring-2"
+                      : "bg-surface-1"
                   }`}
                 >
-                  {day ? (
-                    <Link
-                      href={href({ dia: key })}
-                      className={`mb-2 grid size-7 place-items-center rounded-full text-sm ${
-                        key === today ? "bg-accent text-[#161616]" : ""
-                      }`}
-                    >
-                      {day}
-                    </Link>
-                  ) : null}
-                  {items.slice(0, 2).map((item) => (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      className={`mb-1 flex items-center gap-1 truncate rounded-full px-2 py-1 text-xs ${
-                        item.kind === "evento"
-                          ? "bg-violet text-on-violet"
-                          : "bg-surface-3"
-                      }`}
-                    >
-                      {item.status ? (
+                  <Link
+                    href={href({ dia: key })}
+                    className={`mb-1 grid size-7 place-items-center rounded-full text-sm font-semibold ${
+                      key === today ? "bg-accent text-[#161616]" : "text-muted"
+                    }`}
+                  >
+                    {day}
+                  </Link>
+                  <div className="hidden sm:block">
+                    {items.slice(0, 2).map((item) => (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        className={`mb-1 flex items-center gap-1.5 truncate rounded-full px-2 py-1 text-xs font-medium ${
+                          item.kind === "evento"
+                            ? "bg-violet text-on-violet"
+                            : "bg-surface-3"
+                        }`}
+                      >
+                        {item.status ? (
+                          <span
+                            className={`size-1.5 shrink-0 rounded-full ${DOT[item.status]}`}
+                          />
+                        ) : null}
+                        <span className="truncate">{item.title}</span>
+                      </Link>
+                    ))}
+                    {items.length > 2 ? (
+                      <p className="text-muted px-1 text-[0.6875rem] font-semibold">
+                        +{items.length - 2} más
+                      </p>
+                    ) : null}
+                  </div>
+                  {items.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 sm:hidden">
+                      {items.slice(0, 4).map((item) => (
                         <span
-                          className={`size-1.5 shrink-0 rounded-full ${DOT[item.status]}`}
+                          key={item.id}
+                          className={`size-1.5 rounded-full ${
+                            item.kind === "evento" ? "bg-violet" : "bg-muted"
+                          }`}
                         />
-                      ) : null}
-                      {item.title}
-                    </Link>
-                  ))}
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               );
             })}
           </div>
         ) : (
-          <ol className="grid gap-4">
+          <ol className="grid gap-5">
             {[...groups.entries()].map(([day, items]) => (
               <li
                 key={day}
@@ -237,7 +278,7 @@ export default async function CalendarPage({
                   day === selected ? "ring-accent rounded-[24px] ring-2" : ""
                 }
               >
-                <h2 className="px-1 py-2 text-sm font-semibold capitalize">
+                <h2 className="text-muted px-1 py-2 text-sm font-semibold capitalize">
                   {formatCostaRica(`${day}T18:00:00Z`, "EEEE d MMM")}
                 </h2>
                 <div className="grid gap-2">
@@ -245,73 +286,88 @@ export default async function CalendarPage({
                     <Link
                       key={item.id}
                       href={item.href}
-                      className="bg-surface-1 flex items-center justify-between gap-3 rounded-[20px] px-4 py-3"
+                      className="bg-surface-1 border-line hover:border-surface-3 flex items-center gap-3 rounded-[18px] border px-4 py-3"
                     >
-                      <span>
+                      <span className="text-muted w-12 shrink-0 text-sm font-semibold tabular-nums">
+                        {item.time || "—"}
+                      </span>
+                      <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2 font-semibold">
                           {item.status ? (
                             <span
-                              className={`size-2 rounded-full ${DOT[item.status]}`}
+                              className={`size-2 shrink-0 rounded-full ${DOT[item.status]}`}
                             />
                           ) : null}
-                          {item.title}
+                          <span className="truncate">{item.title}</span>
                         </span>
-                        <span className="text-muted text-sm">
-                          {item.time
-                            ? `${item.time} · ${item.kind}`
-                            : item.kind}
-                        </span>
+                      </span>
+                      <span
+                        className={`badge ${item.kind === "evento" ? "badge-violet" : ""}`}
+                      >
+                        {item.kind}
                       </span>
                     </Link>
                   ))}
                 </div>
               </li>
             ))}
+            {groups.size === 0 ? (
+              <EmptyState
+                icon={<CalendarDays size={20} aria-hidden />}
+                title="No hay actividades en esta semana."
+              />
+            ) : null}
           </ol>
         )}
-        <aside className="bg-surface-1 rounded-[28px] p-5">
-          <h2 className="text-2xl font-semibold capitalize">
+        <aside className="panel xl:sticky xl:top-6">
+          <p className="eyebrow">Día seleccionado</p>
+          <h2 className="mt-1 text-2xl font-semibold capitalize">
             {formatCostaRica(`${selected}T18:00:00Z`, "EEEE d")}
           </h2>
           {dayItems.length === 0 ? (
-            <p className="text-muted mt-3 text-sm">Sin actividades este día.</p>
+            <p className="text-muted mt-4 text-sm">Sin actividades este día.</p>
           ) : (
-            <ul className="mt-4 grid gap-3">
+            <ul className="mt-4 grid gap-2.5">
               {dayItems.map((item) => (
                 <li key={item.id}>
-                  <Link href={item.href} className="font-medium">
-                    {item.title}
+                  <Link
+                    href={item.href}
+                    className="bg-surface-2 hover:bg-surface-3 block rounded-[16px] px-3.5 py-2.5"
+                  >
+                    <span className="block font-semibold">{item.title}</span>
+                    <span className="text-muted text-sm">
+                      {item.time ? `${item.time} · ${item.kind}` : item.kind}
+                    </span>
                   </Link>
-                  <p className="text-muted text-sm">
-                    {item.time ? `${item.time} · ${item.kind}` : item.kind}
-                  </p>
                 </li>
               ))}
             </ul>
           )}
         </aside>
       </div>
-      <section className="bg-surface-1 rounded-[28px] p-5">
-        <h2 className="text-2xl font-semibold">Sin fecha</h2>
+      <Panel title="Sin fecha" description="Tareas sin fecha de entrega.">
         {undated.length === 0 ? (
-          <p className="text-muted mt-2">No hay tareas sin fecha.</p>
+          <p className="text-muted text-sm">No hay tareas sin fecha.</p>
         ) : (
-          <ul className="mt-3 grid gap-2">
+          <ul className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
             {undated.map((task) => (
               <li key={task.id}>
-                <Link href="/tareas" className="font-medium">
-                  {task.title}
+                <Link
+                  href="/tareas"
+                  className="bg-surface-2 hover:bg-surface-3 block rounded-[16px] px-3.5 py-2.5"
+                >
+                  <span className="block font-semibold">{task.title}</span>
+                  <span className="text-muted text-sm">
+                    {catalogView.personName(task.assigneeIds[0] ?? "")} ·{" "}
+                    {catalogView.activityTitle(task.activityIds[0] ?? "") ||
+                      "Sin evento"}
+                  </span>
                 </Link>
-                <p className="text-muted text-sm">
-                  {catalogView.personName(task.assigneeIds[0] ?? "")} ·{" "}
-                  {catalogView.activityTitle(task.activityIds[0] ?? "") ||
-                    "Sin evento"}
-                </p>
               </li>
             ))}
           </ul>
         )}
-      </section>
+      </Panel>
     </div>
   );
 }

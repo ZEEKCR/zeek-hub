@@ -1,7 +1,10 @@
+import { CalendarDays, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
 import { AvatarStack } from "@/components/ui/avatar-stack";
+import { EmptyState } from "@/components/ui/empty-state";
 import { HeroGradientCard } from "@/components/ui/hero-gradient-card";
 import { NotchedCard } from "@/components/ui/notched-card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { QueryChips } from "@/components/ui/query-chips";
 import { formatWhen } from "@/lib/dates";
@@ -41,19 +44,22 @@ export default async function EventsPage({
 
   return (
     <div className="grid gap-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
-          Eventos
-        </h1>
-        {actor.role === "admin" ? (
-          <Link
-            href="/eventos/nuevo"
-            className="bg-accent inline-flex h-12 items-center rounded-full px-5 font-medium text-[#161616]"
-          >
-            Nueva actividad
-          </Link>
-        ) : null}
-      </header>
+      <PageHeader
+        title="Eventos"
+        subtitle={
+          scope === "pasados"
+            ? "Eventos que ya ocurrieron."
+            : "Lo que viene, con su avance y su equipo."
+        }
+        actions={
+          actor.role === "admin" ? (
+            <Link href="/eventos/nuevo" className="btn btn-primary">
+              <Plus size={18} aria-hidden />
+              Nueva actividad
+            </Link>
+          ) : null
+        }
+      />
       <QueryChips
         label="Alcance"
         pathname="/eventos"
@@ -79,7 +85,7 @@ export default async function EventsPage({
                 : "Sin fecha"}
               {next.place ? ` · ${next.place}` : ""}
             </p>
-            <div className="mt-4">
+            <div className="mt-3">
               <ProgressBar value={view.taskProgress(next.id)} />
             </div>
           </HeroGradientCard>
@@ -92,33 +98,68 @@ export default async function EventsPage({
             actionLabel={`Abrir ${activity.title}`}
             href={`/eventos/${activity.id}`}
           >
-            <p className="text-sm opacity-70">
-              {STAGE_LABEL[activity.stage]}
-              {activity.kind ? ` · ${activity.kind}` : ""}
-              {activity.format ? ` · ${activity.format}` : ""}
+            <p className="flex flex-wrap items-center gap-2">
+              <span
+                className={`badge ${
+                  activity.stage === "execution"
+                    ? "badge-accent"
+                    : activity.stage === "finished"
+                      ? ""
+                      : "badge-violet"
+                }`}
+              >
+                {STAGE_LABEL[activity.stage]}
+              </span>
+              {activity.kind ? (
+                <span className="text-xs font-medium opacity-70">
+                  {activity.kind}
+                  {activity.format ? ` · ${activity.format}` : ""}
+                </span>
+              ) : null}
             </p>
-            <h2 className="mt-2 text-2xl font-semibold">{activity.title}</h2>
-            <p className="mt-3 text-sm">
-              {activity.start
-                ? formatWhen(
-                    activity.start,
-                    activity.timed,
-                    "d MMM, HH:mm",
-                    "d MMM",
-                  )
-                : "Sin fecha"}
-              {activity.place ? ` · ${activity.place}` : ""}
+            <h2 className="mt-3 text-xl leading-snug font-semibold">
+              {activity.title}
+            </h2>
+            <p className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm opacity-80">
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarDays size={14} aria-hidden />
+                {activity.start
+                  ? formatWhen(
+                      activity.start,
+                      activity.timed,
+                      "d MMM, HH:mm",
+                      "d MMM",
+                    )
+                  : "Sin fecha"}
+              </span>
+              {activity.place ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin size={14} aria-hidden />
+                  {activity.place}
+                </span>
+              ) : null}
             </p>
-            <div className="mt-4">
+            <div className="mt-4 flex items-center justify-between gap-3">
               <AvatarStack
                 names={activity.volunteerIds.map((id) => view.personName(id))}
               />
+              <span className="text-xs font-semibold tabular-nums opacity-70">
+                {view.taskProgress(activity.id)}% listo
+              </span>
             </div>
           </NotchedCard>
         ))}
       </div>
       {events.length === 0 ? (
-        <p className="text-muted">No hay eventos en esta vista.</p>
+        <EmptyState
+          icon={<CalendarDays size={20} aria-hidden />}
+          title="No hay eventos en esta vista."
+          hint={
+            scope === "pasados"
+              ? "Aquí aparecerán los eventos que ya ocurrieron."
+              : "Cuando se publique un evento nuevo aparecerá aquí."
+          }
+        />
       ) : null}
     </div>
   );

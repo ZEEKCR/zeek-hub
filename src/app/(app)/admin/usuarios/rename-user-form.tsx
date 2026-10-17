@@ -12,7 +12,7 @@ export function RenameUserForm({
 }) {
   const [state, action, pending] = useActionState(renameUserAction, null);
   return (
-    <form action={action} className="mt-3 flex flex-wrap items-center gap-2">
+    <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="userId" value={userId} />
       <label className="sr-only" htmlFor={`name-${userId}`}>
         Nombre completo
@@ -23,12 +23,12 @@ export function RenameUserForm({
         required
         defaultValue={name}
         placeholder="Nombre completo"
-        className="bg-surface-2 h-10 min-w-0 flex-1 rounded-[14px] px-3 text-sm"
+        className="field h-10 min-h-10 min-w-0 flex-1 text-sm"
       />
       <button
         type="submit"
         disabled={pending}
-        className="bg-surface-2 h-10 rounded-full px-4 text-sm font-medium"
+        className="btn btn-secondary btn-sm"
       >
         Guardar nombre
       </button>

@@ -1,4 +1,10 @@
+import { ArrowLeft, Users } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Avatar } from "@/components/ui/avatar";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { Panel } from "@/components/ui/panel";
 import { publicEmail } from "@/server/auth/credentials";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
@@ -24,40 +30,66 @@ export default async function TeamDetailPage({
 
   return (
     <div className="grid gap-6">
-      <h1 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold">
-        {team.name}
-      </h1>
-      <section className="grid gap-3">
-        <h2 className="text-2xl font-semibold">Miembros</h2>
-        {members.map((member) => {
-          const email = showContact ? publicEmail(member.email) : undefined;
-          return (
-            <article
-              key={member.id}
-              className="bg-surface-1 rounded-[20px] p-4"
-            >
-              <h3 className="font-semibold">
-                {member.displayUsername || member.name}
-              </h3>
-              <p className="text-muted mt-1 text-sm">
-                @{member.username} · {roleLabel(member.role)}
+      <Link
+        href="/equipos"
+        className="text-muted hover:text-fg inline-flex w-fit items-center gap-1.5 text-sm font-semibold"
+      >
+        <ArrowLeft size={16} aria-hidden />
+        Equipos
+      </Link>
+      <PageHeader
+        kicker="Equipo"
+        title={team.name}
+        subtitle={`${members.length} ${members.length === 1 ? "cuenta" : "cuentas"} · ${tasks.length} ${tasks.length === 1 ? "tarea" : "tareas"}`}
+      />
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <Panel title="Miembros">
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {members.map((member) => {
+              const email = showContact ? publicEmail(member.email) : undefined;
+              const name = member.displayUsername || member.name;
+              return (
+                <article
+                  key={member.id}
+                  className="bg-surface-2 flex items-start gap-3 rounded-[16px] p-3.5"
+                >
+                  <Avatar name={name} />
+                  <div className="min-w-0">
+                    <h3 className="truncate font-semibold">{name}</h3>
+                    <p className="text-muted mt-0.5 text-sm">
+                      @{member.username} · {roleLabel(member.role)}
+                    </p>
+                    {email ? (
+                      <p className="text-muted truncate text-sm">{email}</p>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          {members.length === 0 ? (
+            <EmptyState
+              icon={<Users size={20} aria-hidden />}
+              title="No hay cuentas en este equipo."
+            />
+          ) : null}
+        </Panel>
+        <Panel title="Tareas del equipo">
+          <div className="grid gap-2">
+            {tasks.map((task) => (
+              <p
+                key={task.id}
+                className="bg-surface-2 rounded-[14px] px-3.5 py-2.5 text-sm font-medium"
+              >
+                {task.title}
               </p>
-              {email ? <p className="text-muted text-sm">{email}</p> : null}
-            </article>
-          );
-        })}
-        {members.length === 0 ? (
-          <p className="text-muted">No hay cuentas en este equipo.</p>
-        ) : null}
-      </section>
-      <section className="grid gap-3">
-        <h2 className="text-2xl font-semibold">Tareas del equipo</h2>
-        {tasks.map((task) => (
-          <p key={task.id} className="bg-surface-1 rounded-[20px] px-4 py-3">
-            {task.title}
-          </p>
-        ))}
-      </section>
+            ))}
+          </div>
+          {tasks.length === 0 ? (
+            <p className="text-muted text-sm">Sin tareas por ahora.</p>
+          ) : null}
+        </Panel>
+      </div>
     </div>
   );
 }

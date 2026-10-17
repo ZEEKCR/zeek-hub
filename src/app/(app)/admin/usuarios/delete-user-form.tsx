@@ -12,7 +12,7 @@ export function DeleteUserForm({
 }) {
   const [state, action, pending] = useActionState(deleteUserAction, null);
   return (
-    <form action={action} className="mt-2 flex flex-wrap items-center gap-3">
+    <form action={action} className="flex flex-wrap items-center gap-3">
       <input type="hidden" name="userId" value={userId} />
       <label className="flex items-center gap-2 text-sm">
         <input
@@ -27,7 +27,7 @@ export function DeleteUserForm({
       <button
         type="submit"
         disabled={disabled || pending}
-        className="text-danger h-10 rounded-full px-4 text-sm font-medium disabled:opacity-60"
+        className="btn btn-danger btn-sm"
       >
         {pending ? "Eliminando…" : "Eliminar usuario"}
       </button>

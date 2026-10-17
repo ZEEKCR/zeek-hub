@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { updateProfileAction } from "@/app/(app)/admin/usuarios/actions";
 
-const field = "bg-surface-2 h-10 min-w-0 rounded-[14px] px-3 text-sm";
+const field = "field h-10 min-h-10 min-w-0 text-sm";
 
 export function ProfileForm({
   userId,
@@ -22,9 +22,9 @@ export function ProfileForm({
 }) {
   const [state, action, pending] = useActionState(updateProfileAction, null);
   return (
-    <form action={action} className="mt-3 grid gap-2 sm:grid-cols-2">
+    <form action={action} className="grid gap-3 sm:grid-cols-2">
       <input type="hidden" name="userId" value={userId} />
-      <label className="grid gap-1 text-xs font-medium">
+      <label className="field-label">
         Departamento
         <select name="teamId" defaultValue={teamId} className={field}>
           {teamId === "" ? <option value="">Sin departamento</option> : null}
@@ -35,7 +35,7 @@ export function ProfileForm({
           ))}
         </select>
       </label>
-      <label className="grid gap-1 text-xs font-medium">
+      <label className="field-label">
         Nombre de rol
         <input
           name="jobTitle"
@@ -45,7 +45,7 @@ export function ProfileForm({
           className={field}
         />
       </label>
-      <label className="grid gap-1 text-xs font-medium">
+      <label className="field-label">
         Correo
         <input
           name="email"
@@ -55,7 +55,7 @@ export function ProfileForm({
           className={field}
         />
       </label>
-      <label className="grid gap-1 text-xs font-medium">
+      <label className="field-label">
         Teléfono
         <input
           name="phone"
@@ -68,7 +68,7 @@ export function ProfileForm({
         <button
           type="submit"
           disabled={pending}
-          className="bg-surface-2 h-10 rounded-full px-4 text-sm font-medium disabled:opacity-60"
+          className="btn btn-secondary btn-sm"
         >
           Guardar perfil
         </button>

@@ -12,48 +12,36 @@ export function CreateUserForm({
 }) {
   const [state, action, pending] = useActionState(createUserAction, null);
   return (
-    <form
-      action={action}
-      className="bg-surface-1 grid gap-3 rounded-[28px] p-5"
-    >
-      <h2 className="text-xl font-semibold">Nuevo usuario</h2>
-      <input
-        name="username"
-        required
-        placeholder="Usuario"
-        className="bg-surface-2 h-12 rounded-[14px] px-4"
-      />
-      <input
-        name="name"
-        required
-        placeholder="Nombre"
-        className="bg-surface-2 h-12 rounded-[14px] px-4"
-      />
+    <form action={action} className="panel grid gap-3">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight">Nuevo usuario</h2>
+        <p className="text-muted text-sm">
+          La contraseña temporal se muestra una sola vez.
+        </p>
+      </div>
+      <input name="username" required placeholder="Usuario" className="field" />
+      <input name="name" required placeholder="Nombre" className="field" />
       <input
         name="email"
         type="email"
         placeholder="Correo (opcional)"
-        className="bg-surface-2 h-12 rounded-[14px] px-4"
+        className="field"
       />
-      <input
-        name="phone"
-        placeholder="Teléfono (opcional)"
-        className="bg-surface-2 h-12 rounded-[14px] px-4"
-      />
+      <input name="phone" placeholder="Teléfono (opcional)" className="field" />
       <input
         name="jobTitle"
         maxLength={60}
         placeholder="Nombre de rol (opcional)"
-        className="bg-surface-2 h-12 rounded-[14px] px-4"
+        className="field"
       />
       {allowRole ? (
         <>
-          <label htmlFor="teamId" className="grid gap-1 text-sm font-medium">
+          <label htmlFor="teamId" className="field-label">
             Equipo
             <select
               id="teamId"
               name="teamId"
-              className="bg-surface-2 h-12 rounded-[14px] px-4"
+              className="field"
               defaultValue={teams[0]?.id}
             >
               {teams.map((team) => (
@@ -65,7 +53,8 @@ export function CreateUserForm({
           </label>
           <select
             name="role"
-            className="bg-surface-2 h-12 rounded-[14px] px-4"
+            aria-label="Rol"
+            className="field"
             defaultValue="volunteer"
           >
             <option value="volunteer">Voluntario</option>
@@ -86,11 +75,7 @@ export function CreateUserForm({
           Contraseña temporal: {state.data.tempPassword}
         </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="bg-accent h-12 rounded-full font-semibold text-[#161616]"
-      >
+      <button type="submit" disabled={pending} className="btn btn-primary">
         Crear usuario
       </button>
     </form>

@@ -15,7 +15,7 @@ export function ChangeRoleForm({
 }) {
   const [state, action, pending] = useActionState(changeRoleAction, null);
   return (
-    <form action={action} className="mt-2 flex flex-wrap items-center gap-2">
+    <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="userId" value={userId} />
       <label className="sr-only" htmlFor={`role-${userId}`}>
         Rol
@@ -25,7 +25,7 @@ export function ChangeRoleForm({
         name="role"
         defaultValue={role}
         disabled={disabled}
-        className="bg-surface-2 h-10 rounded-[14px] px-3 text-sm"
+        className="field h-10 min-h-10 w-auto min-w-40 text-sm"
       >
         {ROLE_ORDER.map((value) => (
           <option key={value} value={value}>
@@ -36,7 +36,7 @@ export function ChangeRoleForm({
       <button
         type="submit"
         disabled={disabled || pending}
-        className="bg-surface-2 h-10 rounded-full px-4 text-sm font-medium disabled:opacity-60"
+        className="btn btn-secondary btn-sm"
       >
         Guardar rol
       </button>
