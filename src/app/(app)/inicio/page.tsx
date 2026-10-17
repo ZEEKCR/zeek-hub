@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ListChecks } from "lucide-react";
+import { BirthdayBanner, BirthdayList } from "@/components/ui/birthday-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HeroGradientCard } from "@/components/ui/hero-gradient-card";
 import { KpiStat } from "@/components/ui/kpi-stat";
@@ -26,6 +27,7 @@ import { loadCatalog } from "@/server/catalog/load";
 import { dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { isArchivedTask } from "@/server/catalog/archive";
 import { assigneeToken } from "@/server/domain/assignee";
+import { listUpcomingBirthdays } from "@/server/services/birthdays";
 
 export default async function HomePage({
   searchParams,
@@ -42,6 +44,8 @@ export default async function HomePage({
   const search = searchRecord(raw);
   const filter = one(raw.filtro) ?? "all";
   const today = todayKey();
+  const birthdays = await listUpcomingBirthdays(actor, today);
+  const birthdaysToday = birthdays.filter((person) => person.daysUntil === 0);
   const assigneeIds = assigneeKeys(
     actor.volunteerId,
     actor.notionUserId,
@@ -145,6 +149,7 @@ export default async function HomePage({
         title={`Hola, ${actor.fullName || actor.displayName}`}
         subtitle="Esto es lo que tienes pendiente y lo que viene en el calendario."
       />
+      <BirthdayBanner people={birthdaysToday} selfId={actor.userId} />
       {catalog.connected ? null : (
         <Notice>
           {catalog.notice ??
@@ -240,6 +245,9 @@ export default async function HomePage({
               </HeroGradientCard>
             </Link>
           ) : null}
+          <Panel title="Cumpleaños" description="Los próximos 30 días.">
+            <BirthdayList people={birthdays} />
+          </Panel>
           <Panel title="Avisos">
             {notices.length === 0 ? (
               <p className="text-muted text-sm">No hay avisos nuevos.</p>

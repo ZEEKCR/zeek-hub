@@ -32,7 +32,7 @@ function Icons({ size }: { size: number }) {
 export function ThemeToggle({
   variant = "rail",
 }: {
-  variant?: "rail" | "menu" | "icon";
+  variant?: "rail" | "menu" | "icon" | "row";
 }) {
   if (variant === "icon") {
     return (
@@ -44,6 +44,27 @@ export function ThemeToggle({
         className="text-muted hover:bg-surface-2 hover:text-fg grid size-10 place-items-center rounded-full transition-colors"
       >
         <Icons size={18} />
+      </button>
+    );
+  }
+  if (variant === "row") {
+    return (
+      <button
+        type="button"
+        onClick={toggleTheme}
+        aria-label="Cambiar entre modo claro y oscuro"
+        className="bg-surface-2 hover:bg-surface-3 flex w-full items-center gap-3 rounded-[16px] px-4 py-3 text-left transition-colors"
+      >
+        <span className="bg-surface-1 grid size-9 shrink-0 place-items-center rounded-full">
+          <Icons size={17} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold">Apariencia</span>
+          <span className="text-muted text-xs">
+            <span className="hidden dark:inline">Cambiar a modo claro</span>
+            <span className="dark:hidden">Cambiar a modo oscuro</span>
+          </span>
+        </span>
       </button>
     );
   }
