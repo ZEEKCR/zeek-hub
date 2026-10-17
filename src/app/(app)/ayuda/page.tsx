@@ -23,7 +23,15 @@ const FAQ = [
   },
   {
     q: "¿Cómo cambio entre modo claro y oscuro?",
-    a: "Usa el botón «Tema» de la barra lateral (o «Más» en el celular). Tu elección se guarda en este navegador.",
+    a: "En Perfil, dentro de Preferencias, toca «Apariencia». Tu elección se guarda en este navegador.",
+  },
+  {
+    q: "¿Cómo me uno al Discord de ZEEK?",
+    a: "En Perfil, dentro de Preferencias, toca «Unirme al Discord de ZEEK». Se abre la invitación en otra pestaña.",
+  },
+  {
+    q: "¿Cómo instalo el hub en el celular?",
+    a: "En Perfil, dentro de Preferencias, toca «Instalar la app». En iPhone, abre el hub en Safari, toca Compartir y luego «Añadir a pantalla de inicio».",
   },
   {
     q: "¿Quién puede crear eventos, recursos y usuarios?",
