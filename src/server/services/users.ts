@@ -895,14 +895,20 @@ export async function changeOwnPassword(input: {
       );
   }
   const auth = await readyAuth();
-  await auth.api.changePassword({
-    body: {
-      currentPassword: input.currentPassword,
-      newPassword: input.nextPassword,
-      revokeOtherSessions: true,
-    },
-    headers: input.headers,
-  });
+  try {
+    await auth.api.changePassword({
+      body: {
+        currentPassword: input.currentPassword,
+        newPassword: input.nextPassword,
+        revokeOtherSessions: true,
+      },
+      headers: input.headers,
+    });
+  } catch (error) {
+    const message = describePasswordChangeError(error);
+    if (!message) throw error;
+    return err("validation", message);
+  }
   await getDb()
     .update(user)
     .set({
@@ -1022,4 +1028,22 @@ export async function listTeamAccounts() {
 
 export function contactEmail(email: string | null | undefined) {
   return isPlaceholderEmail(email) ? null : (email ?? null);
+}
+
+/**
+ * Better Auth throws when the current password does not match. That is a
+ * normal mistake, not a server failure, so it gets a clear message.
+ */
+export function describePasswordChangeError(error: unknown) {
+  const code =
+    typeof error === "object" && error && "body" in error
+      ? (error as { body?: { code?: string } }).body?.code
+      : undefined;
+  if (code === "INVALID_PASSWORD") {
+    return "La contraseña actual no es correcta. Revisa que sea la temporal que te entregaron.";
+  }
+  if (code === "PASSWORD_TOO_SHORT" || code === "PASSWORD_TOO_LONG") {
+    return "La nueva contraseña no cumple el largo permitido.";
+  }
+  return null;
 }
