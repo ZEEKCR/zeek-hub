@@ -1,6 +1,6 @@
 /** Shown while a screen loads, so the page never goes blank. */
 export default function AppLoading() {
-  const block = "bg-surface-2 animate-pulse rounded-[20px]";
+  const block = "shimmer rounded-[20px]";
   return (
     <div className="grid gap-6" role="status" aria-label="Cargando">
       <div className="grid gap-2.5">

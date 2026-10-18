@@ -1,4 +1,5 @@
 import { PartyPopper } from "lucide-react";
+import { ConfettiRain } from "@/components/ui/confetti-rain";
 import type { UpcomingBirthday } from "@/server/birthdays/rules";
 
 /** Celebration banner for people whose birthday is today. */
@@ -24,6 +25,7 @@ export function BirthdayBanner({
       className="rise relative overflow-hidden rounded-[24px] bg-[linear-gradient(120deg,#6335ED_0%,#3B7BD9_55%,#01E576_120%)] p-5 text-white shadow-[var(--shadow-card)] md:p-6"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_0%,rgb(255_255_255/0.28),transparent_50%)]" />
+      <ConfettiRain />
       <div className="relative flex items-center gap-4">
         <span className="float grid size-12 shrink-0 place-items-center rounded-full bg-white/20 backdrop-blur">
           <PartyPopper size={24} aria-hidden />

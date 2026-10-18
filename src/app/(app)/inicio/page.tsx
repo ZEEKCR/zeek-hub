@@ -286,8 +286,12 @@ export default async function HomePage({
               </p>
             ) : (
               <ul className="grid gap-2">
-                {week.map((item) => (
-                  <li key={`${item.kind}-${item.id}`}>
+                {week.map((item, index) => (
+                  <li
+                    key={`${item.kind}-${item.id}`}
+                    className="rise"
+                    style={{ animationDelay: `${index * 70}ms` }}
+                  >
                     <Link
                       href={item.href}
                       className="bg-surface-2 hover:bg-surface-3 flex items-center gap-3 rounded-[14px] px-3.5 py-2.5 transition-colors"

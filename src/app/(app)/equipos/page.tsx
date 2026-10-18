@@ -38,6 +38,7 @@ export default async function TeamsPage() {
               key={team.id}
               actionLabel={`Abrir ${team.name}`}
               href={`/equipos/${team.id}`}
+              accent={teamToneOrFallback(team.id).solid}
             >
               <h2 className="flex items-center gap-2.5 text-xl font-semibold">
                 <span

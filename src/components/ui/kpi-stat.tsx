@@ -1,3 +1,5 @@
+import { CountUp } from "@/components/ui/count-up";
+
 export function KpiStat({
   label,
   value,
@@ -13,7 +15,7 @@ export function KpiStat({
     <div className="bg-surface-1 border-line shadow-card min-w-0 rounded-[20px] border px-4 py-3.5">
       <p className="text-muted text-[0.8125rem] font-medium">{label}</p>
       <p className="mt-1.5 text-[clamp(1.75rem,3.2vw,2.5rem)] leading-none font-semibold tabular-nums">
-        {value}
+        <CountUp value={value} />
       </p>
       {delta ? (
         <p

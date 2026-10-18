@@ -67,6 +67,9 @@ export function AppShell({
   ];
   const moreActive =
     more.some((item) => pathname.startsWith(item.href)) || profileActive;
+  /** Position of the active item, so one pill can slide between them with CSS. */
+  const railIndex = items.findIndex((item) => pathname.startsWith(item.href));
+  const barIndex = moreActive ? mobile.length : railIndex;
   return (
     <div className="bg-bg text-fg min-h-dvh">
       <aside className="border-line bg-bg/70 fixed top-0 left-0 z-10 hidden h-dvh w-[88px] flex-col items-center gap-1 border-r py-4 backdrop-blur-xl md:flex">
@@ -94,7 +97,19 @@ export function AppShell({
           <Search size={20} strokeWidth={1.75} />
           Buscar
         </button>
-        <nav aria-label="Principal" className="grid w-full gap-1 px-2">
+        <nav
+          aria-label="Principal"
+          className="relative grid w-full gap-1 px-2"
+          style={{ ["--i" as string]: Math.max(railIndex, 0) }}
+        >
+          <span
+            aria-hidden
+            className="bg-inverse pointer-events-none absolute top-0 right-2 left-2 h-14 rounded-2xl shadow-[var(--shadow-card)] transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+            style={{
+              transform: "translateY(calc(var(--i) * 3.75rem))",
+              opacity: railIndex >= 0 ? 1 : 0,
+            }}
+          />
           {items.map((item) => {
             const Icon = item.icon;
             const active = pathname.startsWith(item.href);
@@ -105,9 +120,9 @@ export function AppShell({
                 aria-label={item.label}
                 aria-current={active ? "page" : undefined}
                 title={item.label}
-                className={`group grid justify-items-center gap-1 rounded-2xl px-1 py-2 text-[0.6875rem] font-semibold transition-colors ${
+                className={`group relative z-10 grid h-14 content-center justify-items-center gap-1 rounded-2xl px-1 text-[0.6875rem] font-semibold transition-colors duration-300 ${
                   active
-                    ? "bg-inverse text-bg shadow-[var(--shadow-card)]"
+                    ? "text-bg"
                     : "text-muted hover:bg-surface-2 hover:text-fg"
                 }`}
               >
@@ -205,7 +220,20 @@ export function AppShell({
             </div>
           </>
         ) : null}
-        <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between rounded-full border border-white/10 bg-[#0f1116] p-1.5 shadow-[0_12px_32px_rgb(0_0_0/0.35)]">
+        <div
+          className="pointer-events-auto relative mx-auto grid max-w-md grid-cols-5 rounded-full border border-white/10 bg-[#0f1116] p-1.5 shadow-[0_12px_32px_rgb(0_0_0/0.35)]"
+          style={{ ["--i" as string]: Math.max(barIndex, 0) }}
+        >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute top-1.5 bottom-1.5 left-1.5 grid w-[calc((100%-0.75rem)/5)] place-items-center transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+            style={{
+              transform: "translateX(calc(var(--i) * 100%))",
+              opacity: barIndex >= 0 ? 1 : 0,
+            }}
+          >
+            <span className="size-12 rounded-full bg-white" />
+          </span>
           {mobile.map((item) => {
             const Icon = item.icon;
             const active = pathname.startsWith(item.href);
@@ -215,10 +243,8 @@ export function AppShell({
                 href={item.href}
                 aria-label={item.label}
                 aria-current={active ? "page" : undefined}
-                className={`grid size-12 place-items-center rounded-full transition-all duration-300 ${
-                  active
-                    ? "scale-100 bg-white text-[#0f1116]"
-                    : "text-white/70 hover:text-white"
+                className={`relative z-10 grid size-12 place-items-center justify-self-center rounded-full transition-colors duration-300 active:scale-90 ${
+                  active ? "text-[#0f1116]" : "text-white/70 hover:text-white"
                 }`}
               >
                 <Icon size={21} strokeWidth={1.75} />
@@ -230,10 +256,8 @@ export function AppShell({
             aria-label="Más"
             aria-expanded={moreOpen}
             onClick={() => setMoreOpen((open) => !open)}
-            className={`grid size-12 place-items-center rounded-full transition-all duration-300 ${
-              moreActive
-                ? "bg-white text-[#0f1116]"
-                : "text-white/70 hover:text-white"
+            className={`relative z-10 grid size-12 place-items-center justify-self-center rounded-full transition-colors duration-300 active:scale-90 ${
+              moreActive ? "text-[#0f1116]" : "text-white/70 hover:text-white"
             }`}
           >
             <Menu size={21} strokeWidth={1.75} />
