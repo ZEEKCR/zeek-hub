@@ -2,10 +2,18 @@
 
 import { CalendarDays, Lock, PartyPopper } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { moveTaskAction } from "@/app/(app)/tareas/actions";
 import { Avatar } from "@/components/ui/avatar";
+import { confettiBurst } from "@/lib/confetti";
+import { prefersReducedMotion } from "@/lib/motion";
 import { PriorityBadge } from "@/components/ui/priority-badge";
 import { STATUS_LABEL, STATUS_ORDER } from "@/server/catalog/status";
 import type { TaskStatus } from "@/server/domain/types";
@@ -39,14 +47,63 @@ function Portal({ children }: { children: ReactNode }) {
     : createPortal(children, document.body);
 }
 
+/**
+ * Cards glide to their new spot instead of jumping. The positions are taken
+ * right before a move (so scrolling in between does not matter) and compared
+ * after React has drawn the result.
+ */
+function useFlip(items: unknown) {
+  const nodes = useRef(new Map<string, HTMLElement>());
+  const before = useRef<Map<string, DOMRect> | null>(null);
+
+  useLayoutEffect(() => {
+    const previous = before.current;
+    before.current = null;
+    if (!previous || prefersReducedMotion()) return;
+    for (const [id, element] of nodes.current) {
+      const from = previous.get(id);
+      const to = element.getBoundingClientRect();
+      if (!from || from.width === 0 || to.width === 0) continue;
+      const dx = from.left - to.left;
+      const dy = from.top - to.top;
+      if (Math.abs(dx) < 2 && Math.abs(dy) < 2) continue;
+      element.animate(
+        [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }],
+        { duration: 320, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+      );
+    }
+  }, [items]);
+
+  return {
+    register: (id: string) => (element: HTMLElement | null) => {
+      if (element) nodes.current.set(id, element);
+      else nodes.current.delete(id);
+    },
+    snapshot: () => {
+      before.current = new Map(
+        [...nodes.current].map(([id, element]) => [
+          id,
+          element.getBoundingClientRect(),
+        ]),
+      );
+    },
+  };
+}
+
 export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
   const [items, setItems] = useState(tasks);
   const [status, setStatus] = useState<TaskStatus>("not_started");
   const [movingId, setMovingId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [celebrating, setCelebrating] = useState<string | null>(null);
+  const [celebrating, setCelebrating] = useState<{
+    id: string;
+    all: boolean;
+  } | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overColumn, setOverColumn] = useState<TaskStatus | null>(null);
   const celebrateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flip = useFlip(items);
 
   useEffect(
     () => () => {
@@ -55,10 +112,31 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
     [],
   );
 
-  function celebrate(id: string) {
+  /** Confetti from the card; a bigger shower when nothing is left to do. */
+  function celebrate(id: string, all: boolean) {
     if (celebrateTimer.current) clearTimeout(celebrateTimer.current);
-    setCelebrating(id);
-    celebrateTimer.current = setTimeout(() => setCelebrating(null), 2400);
+    setCelebrating({ id, all });
+    celebrateTimer.current = setTimeout(() => setCelebrating(null), 2600);
+    window.setTimeout(() => {
+      const card = document.querySelector(`[data-task-id="${CSS.escape(id)}"]`);
+      const box = card?.getBoundingClientRect();
+      confettiBurst(
+        box
+          ? { x: box.left + box.width / 2, y: box.top + box.height / 2 }
+          : { x: window.innerWidth / 2, y: window.innerHeight * 0.6 },
+        { count: all ? 40 : 30 },
+      );
+      if (all) {
+        confettiBurst(
+          { x: window.innerWidth * 0.2, y: window.innerHeight * 0.75 },
+          { count: 50, power: 1.5 },
+        );
+        confettiBurst(
+          { x: window.innerWidth * 0.8, y: window.innerHeight * 0.75 },
+          { count: 50, power: 1.5 },
+        );
+      }
+    }, 80);
   }
 
   async function move(id: string, next: TaskStatus) {
@@ -68,11 +146,17 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
     const previous = current.status;
     setError(null);
     setPending(true);
+    flip.snapshot();
     setItems((rows) =>
       rows.map((task) => (task.id === id ? { ...task, status: next } : task)),
     );
     setStatus(next);
-    if (next === "done") celebrate(id);
+    if (next === "done") {
+      const left = items.filter(
+        (task) => task.id !== id && task.status !== "done",
+      ).length;
+      celebrate(id, left === 0);
+    }
     try {
       const result = await moveTaskAction(id, next);
       if (!result.ok) {
@@ -135,7 +219,9 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
             className="toast-pop bg-inverse text-bg fixed bottom-24 left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-[var(--shadow-float)] md:bottom-8"
           >
             <PartyPopper size={17} aria-hidden />
-            ¡Listo! Tarea completada
+            {celebrating.all
+              ? "¡Cero pendientes! Buen trabajo"
+              : "¡Listo! Tarea completada"}
           </p>
         </Portal>
       ) : null}
@@ -148,12 +234,22 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
         {columns.map((column) => (
           <section
             key={column.status}
-            className={`bg-surface-1/60 border-line rounded-[24px] border p-3 ${
+            className={`bg-surface-1/60 border-line rounded-[24px] border p-3 transition-colors duration-200 ${
               column.status === status ? "" : "hidden md:block"
-            }`}
-            onDragOver={(event) => event.preventDefault()}
+            } ${dragId && overColumn === column.status ? "drop-target" : ""}`}
+            onDragOver={(event) => {
+              event.preventDefault();
+              if (overColumn !== column.status) setOverColumn(column.status);
+            }}
+            onDragLeave={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+                setOverColumn(null);
+              }
+            }}
             onDrop={(event) => {
               const id = event.dataTransfer.getData("text/plain");
+              setOverColumn(null);
+              setDragId(null);
               if (id) move(id, column.status);
             }}
           >
@@ -173,6 +269,8 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
               {column.tasks.map((task) => (
                 <article
                   key={task.id}
+                  ref={flip.register(task.id)}
+                  data-task-id={task.id}
                   draggable={!task.locked}
                   onDragStart={(event) => {
                     if (task.locked) {
@@ -180,10 +278,15 @@ export function KanbanBoard({ tasks }: { tasks: BoardTask[] }) {
                       return;
                     }
                     event.dataTransfer.setData("text/plain", task.id);
+                    setDragId(task.id);
+                  }}
+                  onDragEnd={() => {
+                    setDragId(null);
+                    setOverColumn(null);
                   }}
                   className={`bg-surface-2 border-line hover:border-surface-3 rounded-[18px] border p-3 motion-safe:transition ${
                     task.locked ? "" : "md:cursor-grab"
-                  } ${celebrating === task.id ? "celebrate" : ""}`}
+                  } ${celebrating?.id === task.id ? "celebrate" : ""} ${dragId === task.id ? "dragging" : ""}`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">

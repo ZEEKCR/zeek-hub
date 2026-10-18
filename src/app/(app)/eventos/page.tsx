@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { HeroGradientCard } from "@/components/ui/hero-gradient-card";
 import { NotchedCard } from "@/components/ui/notched-card";
 import { PageHeader } from "@/components/ui/page-header";
+import { ProgressRing } from "@/components/ui/progress-ring";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { QueryChips } from "@/components/ui/query-chips";
 import { formatWhen } from "@/lib/dates";
@@ -169,9 +170,7 @@ export default async function EventsPage({
             ) : null}
             <div className="mt-4 flex items-center justify-between gap-3">
               <AvatarStack names={view.knownNames(activity.volunteerIds)} />
-              <span className="text-xs font-semibold tabular-nums opacity-70">
-                {view.taskProgress(activity.id)}% listo
-              </span>
+              <ProgressRing value={view.taskProgress(activity.id)} size={40} />
             </div>
           </NotchedCard>
         ))}

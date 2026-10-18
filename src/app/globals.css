@@ -311,6 +311,90 @@ body::before {
     animation: pop 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
     transform-origin: bottom center;
   }
+  /* Skeleton with a light sweep instead of a plain pulse. */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--surface-2) 0%,
+      var(--surface-3) 50%,
+      var(--surface-2) 100%
+    );
+    background-size: 220% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+  /* Slow moving colour, used on the hero card. */
+  .aurora {
+    background-image: linear-gradient(
+      120deg,
+      #6335ed 0%,
+      #3b7bd9 28%,
+      #01e576 55%,
+      #3b7bd9 78%,
+      #6335ed 100%
+    );
+    background-size: 300% 300%;
+    animation: aurora 16s ease-in-out infinite;
+  }
+  /* Soft light that follows the pointer; --mx and --my are set from JS. */
+  .spotlight-glow {
+    background: radial-gradient(
+      240px circle at var(--mx, 50%) var(--my, 50%),
+      rgb(255 255 255 / 0.12),
+      transparent 62%
+    );
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .light .spotlight-glow {
+    background: radial-gradient(
+      240px circle at var(--mx, 50%) var(--my, 50%),
+      rgb(99 53 237 / 0.1),
+      transparent 62%
+    );
+  }
+  .spotlight:hover .spotlight-glow {
+    opacity: 1;
+  }
+  .glow-card {
+    transition: filter 0.3s ease;
+  }
+  .glow-card:hover {
+    filter: drop-shadow(
+      0 10px 16px color-mix(in srgb, var(--glow, #6335ed) 38%, transparent)
+    );
+  }
+  /* Bars fill from the left when they enter. */
+  .bar-fill {
+    transform-origin: left center;
+    animation: bar-fill 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  .ring-draw {
+    animation: ring-draw 1s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  /* Card being dragged, and the column it can land in. */
+  .dragging {
+    opacity: 0.6;
+    transform: scale(1.03) rotate(1.4deg);
+    box-shadow: var(--shadow-float);
+  }
+  .drop-target {
+    outline: 2px dashed color-mix(in srgb, var(--accent) 70%, transparent);
+    outline-offset: -2px;
+    background: color-mix(in srgb, var(--accent) 7%, var(--surface-1));
+  }
+  .ring-pulse {
+    animation: ring-pulse 2.6s ease-out infinite;
+  }
+  .glint {
+    animation: glint 1.6s ease-in-out 0.5s 1;
+  }
+  .breathe {
+    transform-origin: bottom center;
+    animation: breathe 7s ease-in-out infinite;
+  }
+  .drift {
+    animation: drift 18s ease-in-out infinite;
+  }
   .toast-pop {
     animation: toast 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
@@ -397,9 +481,79 @@ body::before {
     transform: scale(1);
   }
 }
+@keyframes shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+@keyframes aurora {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+@keyframes bar-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes ring-draw {
+  from {
+    stroke-dashoffset: var(--ring-len);
+  }
+}
+@keyframes ring-pulse {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+@keyframes glint {
+  40% {
+    filter: brightness(1.7) drop-shadow(0 0 14px rgb(1 229 118 / 0.7));
+  }
+}
+@keyframes breathe {
+  50% {
+    transform: scaleY(0.82);
+  }
+}
+@keyframes drift {
+  50% {
+    transform: translate(-26px, 20px) scale(1.12);
+  }
+}
 @keyframes float {
   50% {
     transform: translateY(-4px);
+  }
+}
+
+/* Theme change: the new theme grows as a circle from the button that was pressed. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  animation: theme-reveal 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 50%));
+  }
+  to {
+    clip-path: circle(150vmax at var(--vt-x, 50%) var(--vt-y, 50%));
   }
 }
 

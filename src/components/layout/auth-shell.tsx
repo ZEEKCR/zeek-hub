@@ -30,7 +30,7 @@ export function AuthShell({
         <aside className="relative isolate flex min-h-[200px] flex-col justify-between overflow-hidden rounded-[28px] bg-[#0a0a0a] p-6 lg:min-h-[620px] lg:p-10">
           <div
             aria-hidden
-            className="pointer-events-none absolute -top-24 -right-20 -z-10 size-72 rounded-full bg-[radial-gradient(circle,rgb(99_53_237/0.75),transparent_68%)]"
+            className="drift pointer-events-none absolute -top-24 -right-20 -z-10 size-72 rounded-full bg-[radial-gradient(circle,rgb(99_53_237/0.75),transparent_68%)]"
           />
           <div
             aria-hidden
@@ -39,10 +39,11 @@ export function AuthShell({
             {BARS.map((bar, index) => (
               <span
                 key={index}
-                className="rounded-t-xl"
+                className="breathe rounded-t-xl"
                 style={{
                   flex: bar.flex,
                   height: bar.height,
+                  animationDelay: `${index * -1.1}s`,
                   background:
                     "linear-gradient(to top, #d6ffe9 0%, #01e576 22%, #2fa7a0 48%, #4b5fe0 76%, #6335ed 100%)",
                 }}
@@ -60,7 +61,7 @@ export function AuthShell({
               width={960}
               height={349}
               priority
-              className="h-9 w-auto lg:h-11"
+              className="glint h-9 w-auto lg:h-11"
             />
             <p className="mt-6 max-w-sm text-2xl leading-tight font-semibold tracking-tight text-balance text-white lg:mt-10 lg:text-[2.5rem]">
               The Future Is Built Together

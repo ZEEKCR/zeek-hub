@@ -13,8 +13,12 @@ export function EmptyState({
 }) {
   return (
     <div className="border-line bg-surface-1/50 flex flex-col items-center gap-2 rounded-[20px] border border-dashed px-6 py-10 text-center">
-      <span className="bg-surface-2 text-muted grid size-12 place-items-center rounded-full">
-        {icon}
+      <span className="bg-surface-2 text-muted relative grid size-12 place-items-center rounded-full">
+        <span
+          aria-hidden
+          className="ring-pulse border-accent/50 absolute inset-0 rounded-full border"
+        />
+        <span className="float grid place-items-center">{icon}</span>
       </span>
       <p className="font-semibold">{title}</p>
       {hint ? <p className="text-muted max-w-sm text-sm">{hint}</p> : null}

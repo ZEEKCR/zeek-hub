@@ -25,13 +25,13 @@ export function AvatarStack({
   const label =
     extra > 0 ? `${shown.join(", ")} y ${extra} más` : unique.join(", ");
   return (
-    <div className="flex items-center" aria-label={label}>
+    <div className="group/stack flex items-center" aria-label={label}>
       {shown.map((name, index) => {
         const tone = teamTone(teamOf.get(name));
         return (
           <span
             key={name}
-            className={`grid size-8 place-items-center rounded-full text-xs font-semibold ring-2 ring-[var(--surface-1)] ${tone ? "text-white" : tones[index % tones.length]} ${index > 0 ? "-ml-2" : ""}`}
+            className={`grid size-8 place-items-center rounded-full text-xs font-semibold ring-2 ring-[var(--surface-1)] ${tone ? "text-white" : tones[index % tones.length]} ${index > 0 ? "-ml-2 transition-[margin] duration-300 group-hover/stack:ml-0.5" : ""}`}
             {...(tone ? { style: { backgroundColor: tone.solid } } : {})}
           >
             {initials(name)}

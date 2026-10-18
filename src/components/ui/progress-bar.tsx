@@ -11,7 +11,7 @@ export function ProgressBar({ value }: { value: number }) {
         aria-label="Avance"
       >
         <div
-          className="bg-accent h-full rounded-full"
+          className="bg-accent bar-fill h-full rounded-full"
           style={{ width: `${width}%` }}
         />
       </div>

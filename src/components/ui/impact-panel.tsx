@@ -1,4 +1,5 @@
 import { CalendarCheck, CheckCircle2, Clock, Sparkles } from "lucide-react";
+import { CountUp } from "@/components/ui/count-up";
 import { Panel } from "@/components/ui/panel";
 import { formatCostaRica } from "@/lib/dates";
 import type { Impact } from "@/server/services/impact";
@@ -49,7 +50,7 @@ export function ImpactPanel({ impact }: { impact: Impact }) {
             <div key={stat.label} className="bg-surface-2 rounded-[16px] p-3.5">
               <Icon size={16} className="text-accent-text" aria-hidden />
               <dd className="mt-2 text-3xl leading-none font-semibold tabular-nums">
-                {stat.value}
+                <CountUp value={stat.value} />
               </dd>
               <dt className="text-muted mt-1.5 text-xs leading-tight">
                 {stat.label}

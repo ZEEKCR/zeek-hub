@@ -58,7 +58,7 @@ export default async function WelcomePage() {
         </p>
 
         <ol className="mt-6 grid gap-3">
-          <li>
+          <li className="rise" style={{ animationDelay: "120ms" }}>
             <form action={finishWelcomeAction}>
               <input type="hidden" name="to" value="/perfil" />
               <button type="submit" className={`${card} w-full`}>
@@ -81,7 +81,7 @@ export default async function WelcomePage() {
               </button>
             </form>
           </li>
-          <li>
+          <li className="rise" style={{ animationDelay: "240ms" }}>
             <a
               href={DISCORD_INVITE}
               target="_blank"
@@ -99,7 +99,7 @@ export default async function WelcomePage() {
               </span>
             </a>
           </li>
-          <li>
+          <li className="rise" style={{ animationDelay: "360ms" }}>
             <form action={finishWelcomeAction}>
               <input type="hidden" name="to" value="/tareas?mias=1" />
               <button type="submit" className={`${card} w-full`}>
@@ -121,7 +121,11 @@ export default async function WelcomePage() {
           </li>
         </ol>
 
-        <form action={finishWelcomeAction} className="mt-7">
+        <form
+          action={finishWelcomeAction}
+          className="rise mt-7"
+          style={{ animationDelay: "480ms" }}
+        >
           <input type="hidden" name="to" value="/inicio" />
           <button
             type="submit"
