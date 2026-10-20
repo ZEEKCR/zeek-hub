@@ -24,6 +24,8 @@ import { roleLabel } from "@/server/domain/roles";
 import { getOwnBirthday } from "@/server/services/birthdays";
 import { loadCatalog } from "@/server/catalog/load";
 import { dayKey, todayKey } from "@/server/catalog/view";
+import { AgreementPanel } from "@/components/agreements/agreement-panel";
+import { getAgreementMeta } from "@/server/services/agreements";
 import { ImpactPanel } from "@/components/ui/impact-panel";
 import { loadImpact } from "@/server/services/impact";
 import { photoVersions } from "@/server/services/photos";
@@ -48,6 +50,7 @@ export default async function ProfilePage() {
   );
   const impact = await loadImpact(actor, catalog.tasks, eventDay, todayKey());
   const birthday = await getOwnBirthday(actor);
+  const agreement = await getAgreementMeta(actor.userId);
   const versions = await photoVersions();
   const displayName = actor.fullName || actor.displayName;
   return (
@@ -113,6 +116,7 @@ export default async function ProfilePage() {
               </form>
             </div>
           </Panel>
+          <AgreementPanel userId={actor.userId} agreement={agreement} />
           <ImpactPanel impact={impact} />
         </div>
         <div className="grid gap-6">

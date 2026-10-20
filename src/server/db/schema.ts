@@ -246,3 +246,17 @@ export const userPhotos = pgTable("user_photos", {
     mode: "date",
   }).notNull(),
 });
+
+export const volunteerAgreements = pgTable("volunteer_agreements", {
+  userId: text("user_id").primaryKey(),
+  filename: text("filename").notNull(),
+  size: integer("size").notNull(),
+  /** Base64 of the signed PDF. Dashboards never select this column. */
+  data: text("data").notNull(),
+  uploadedAt: timestamp("uploaded_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+  /** Who uploaded it: the person themselves or a Head on their behalf. */
+  uploadedBy: text("uploaded_by"),
+});

@@ -204,3 +204,12 @@ BEGIN
       WHERE "privacy_accepted_at" IS NOT NULL;
   END IF;
 END $$;
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "volunteer_agreements" (
+  "user_id" text PRIMARY KEY,
+  "filename" text NOT NULL,
+  "size" integer NOT NULL,
+  "data" text NOT NULL,
+  "uploaded_at" timestamptz NOT NULL,
+  "uploaded_by" text
+);
