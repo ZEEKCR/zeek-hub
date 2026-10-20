@@ -29,6 +29,7 @@ import { dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { isArchivedTask } from "@/server/catalog/archive";
 import { assigneeToken } from "@/server/domain/assignee";
 import { isProject } from "@/server/domain/projects";
+import { requiresAgreement } from "@/server/agreements/rules";
 import { getAgreementMeta } from "@/server/services/agreements";
 import { listMyShifts } from "@/server/services/attendance";
 import { weekAgenda, type WeekItem } from "@/server/catalog/week";
@@ -50,7 +51,9 @@ export default async function HomePage({
   const filter = one(raw.filtro) ?? "all";
   const today = todayKey();
   const birthdaysToday = await listUpcomingBirthdays(actor, today, 0);
-  const agreementPending = (await getAgreementMeta(actor.userId)) === null;
+  const agreementPending =
+    requiresAgreement(actor.role) &&
+    (await getAgreementMeta(actor.userId)) === null;
   const assigneeIds = assigneeKeys(
     actor.volunteerId,
     actor.notionUserId,

@@ -6,7 +6,11 @@ import { user, volunteerAgreements } from "@/server/db/schema";
 import { err, ok, type Result } from "@/server/domain/result";
 import type { Actor } from "@/server/domain/types";
 import { LIMITS, consumeLimit } from "@/server/ratelimit/limiter";
-import { cleanFilename, validateAgreement } from "@/server/agreements/rules";
+import {
+  cleanFilename,
+  requiresAgreement,
+  validateAgreement,
+} from "@/server/agreements/rules";
 
 export type AgreementMeta = {
   filename: string;
@@ -176,7 +180,7 @@ export async function listAgreementStatus(
     .from(volunteerAgreements);
   const byUser = new Map(files.map((file) => [file.userId, file]));
   return people
-    .filter((person) => !person.banned)
+    .filter((person) => !person.banned && requiresAgreement(person.role))
     .map((person) => {
       const file = byUser.get(person.userId);
       return {
