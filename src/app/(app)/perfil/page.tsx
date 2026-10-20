@@ -25,6 +25,7 @@ import { getOwnBirthday } from "@/server/services/birthdays";
 import { loadCatalog } from "@/server/catalog/load";
 import { dayKey, todayKey } from "@/server/catalog/view";
 import { AgreementPanel } from "@/components/agreements/agreement-panel";
+import { requiresAgreement } from "@/server/agreements/rules";
 import { getAgreementMeta } from "@/server/services/agreements";
 import { ImpactPanel } from "@/components/ui/impact-panel";
 import { loadImpact } from "@/server/services/impact";
@@ -116,7 +117,9 @@ export default async function ProfilePage() {
               </form>
             </div>
           </Panel>
-          <AgreementPanel userId={actor.userId} agreement={agreement} />
+          {requiresAgreement(actor.role) ? (
+            <AgreementPanel userId={actor.userId} agreement={agreement} />
+          ) : null}
           <ImpactPanel impact={impact} />
         </div>
         <div className="grid gap-6">

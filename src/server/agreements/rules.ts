@@ -39,3 +39,8 @@ export function formatSize(bytes: number) {
     ? `${Math.max(1, Math.round(bytes / 1000))} KB`
     : `${(bytes / 1_000_000).toFixed(1)} MB`;
 }
+
+/** Heads (role "admin") are not asked to sign; everyone else is. */
+export function requiresAgreement(role: string) {
+  return role !== "admin";
+}

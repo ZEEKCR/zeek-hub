@@ -6,6 +6,7 @@ import {
   MAX_AGREEMENT_BYTES,
   cleanFilename,
   formatSize,
+  requiresAgreement,
   validateAgreement,
 } from "@/server/agreements/rules";
 import {
@@ -66,6 +67,12 @@ describe("agreement rules", () => {
     expect(cleanFilename("x".repeat(200)).length).toBeLessThanOrEqual(84);
   });
 
+  it("asks everyone except Heads to sign", () => {
+    expect(requiresAgreement("volunteer")).toBe(true);
+    expect(requiresAgreement("head")).toBe(true);
+    expect(requiresAgreement("admin")).toBe(false);
+  });
+
   it("formats sizes", () => {
     expect(formatSize(287_600)).toBe("288 KB");
     expect(formatSize(2_500_000)).toBe("2.5 MB");
@@ -85,6 +92,7 @@ describe("agreements", () => {
         name: id === "jefe" ? "Jefa" : id === "ana" ? "Ana" : "Luis",
         email: `${id}@example.com`,
         username: id,
+        role: id === "jefe" ? "admin" : "volunteer",
         createdAt: now,
         updatedAt: now,
       })),
@@ -156,9 +164,9 @@ describe("agreements", () => {
     expect(await listAgreementStatus(actor("volunteer", "ana"))).toEqual([]);
     expect(await listAgreementStatus(actor("head", "lead"))).toEqual([]);
     const rows = await listAgreementStatus(actor("admin", "jefe"));
+    // Jefa is a Head, so she is not on the list.
     expect(rows.map((row) => [row.name, row.agreement !== null])).toEqual([
       ["Ana", true],
-      ["Jefa", false],
       ["Luis", false],
     ]);
     expect(JSON.stringify(rows)).not.toContain("JVBER");
