@@ -27,6 +27,9 @@ import { dayKey, todayKey } from "@/server/catalog/view";
 import { AgreementPanel } from "@/components/agreements/agreement-panel";
 import { requiresAgreement } from "@/server/agreements/rules";
 import { getAgreementMeta } from "@/server/services/agreements";
+import { formatCostaRica } from "@/lib/dates";
+import { ShareBadge } from "@/components/share/share-badge";
+import { teamTone } from "@/lib/team-colors";
 import { ImpactPanel } from "@/components/ui/impact-panel";
 import { loadImpact } from "@/server/services/impact";
 import { photoVersions } from "@/server/services/photos";
@@ -121,6 +124,23 @@ export default async function ProfilePage() {
             <AgreementPanel userId={actor.userId} agreement={agreement} />
           ) : null}
           <ImpactPanel impact={impact} />
+          <Panel
+            title="Mi gafete de ZEEK"
+            description="Una imagen para compartir en tus redes."
+          >
+            <ShareBadge
+              name={displayName}
+              role={account?.jobTitle || roleLabel(actor.role)}
+              team={department?.name}
+              teamColor={teamTone(account?.teamId)?.solid}
+              photoUrl={photoUrl(actor.userId, versions)}
+              since={
+                impact.since
+                  ? formatCostaRica(impact.since, "MMMM 'de' yyyy")
+                  : undefined
+              }
+            />
+          </Panel>
         </div>
         <div className="grid gap-6">
           <Panel
