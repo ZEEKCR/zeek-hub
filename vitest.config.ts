@@ -8,5 +8,8 @@ export default defineConfig({
     setupFiles: ["./tests/setup.ts"],
     include: ["tests/unit/**/*.test.ts"],
     testTimeout: 20000,
+    // Each file starts its own in-memory Postgres and applies every migration;
+    // with many files in parallel that can take longer than the 10 s default.
+    hookTimeout: 60000,
   },
 });
