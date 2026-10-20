@@ -1,3 +1,4 @@
+import { PRIVACY_EMAIL } from "@/lib/links";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { acceptPrivacyAction } from "@/app/(public)/privacidad/actions";
@@ -16,8 +17,17 @@ export default function PrivacyPage() {
           foto opcional, rol y equipo para coordinar el voluntariado. Teléfono y
           correo de otras personas solo los ve el propio equipo y los
           administradores. Los datos se procesan en Notion, Neon, Vercel,
-          Upstash y Sentry, fuera de Costa Rica. El correo de contacto para
-          acceso, rectificación o supresión está pendiente de definir.
+          Upstash y Sentry, fuera de Costa Rica. Si subes tu acuerdo de
+          voluntariado firmado, se guarda en nuestra base de datos y solo lo ven
+          tú y los Head. Para pedir acceso, rectificación o supresión de tus
+          datos, escribe a{" "}
+          <a
+            href={`mailto:${PRIVACY_EMAIL}`}
+            className="text-violet-text font-semibold underline underline-offset-2"
+          >
+            {PRIVACY_EMAIL}
+          </a>
+          .
         </p>
         <form action={acceptPrivacyAction} className="mt-8">
           <button type="submit" className="btn btn-primary h-12 px-6">

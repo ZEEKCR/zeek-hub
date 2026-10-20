@@ -2,6 +2,7 @@ import {
   CheckCircle2,
   ListChecks,
   MessageCircle,
+  Share2,
   UserRound,
 } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -53,8 +54,8 @@ export default async function WelcomePage() {
               .{" "}
             </>
           ) : null}
-          Estas son tres cosas para empezar con el pie derecho. Puedes hacerlas
-          ahora o cuando quieras.
+          Estas son cuatro cosas para empezar con el pie derecho. Puedes
+          hacerlas ahora o cuando quieras.
         </p>
 
         <ol className="mt-6 grid gap-3">
@@ -119,12 +120,31 @@ export default async function WelcomePage() {
               </button>
             </form>
           </li>
+          <li className="rise" style={{ animationDelay: "480ms" }}>
+            <form action={finishWelcomeAction}>
+              <input type="hidden" name="to" value="/perfil#gafete" />
+              <button type="submit" className={`${card} w-full`}>
+                <span className={icon}>
+                  <Share2 size={20} aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-semibold">
+                    4. Comparte tu nueva etapa en ZEEK
+                  </span>
+                  <span className="text-muted text-sm">
+                    Crea tu gafete en imagen o GIF y cuéntale a tu red que ya
+                    eres parte.
+                  </span>
+                </span>
+              </button>
+            </form>
+          </li>
         </ol>
 
         <form
           action={finishWelcomeAction}
           className="rise mt-7"
-          style={{ animationDelay: "480ms" }}
+          style={{ animationDelay: "600ms" }}
         >
           <input type="hidden" name="to" value="/inicio" />
           <button

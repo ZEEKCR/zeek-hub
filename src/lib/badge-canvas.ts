@@ -162,9 +162,10 @@ export function drawBadge(
 
   // The lanyard card. It hangs from the slot, so it sways around the top.
   const cardW = 640;
-  const cardH = 700;
+  const cardH = 780;
   const cx = W / 2;
-  const cy = 870;
+  // Centred in the space between the headline and the footer.
+  const cy = 830;
   const sway = ((-3 + (animated ? 2.6 * wave : 0)) * Math.PI) / 180;
   ctx.save();
   ctx.translate(cx, cy - cardH / 2 + 48);
@@ -200,7 +201,7 @@ export function drawBadge(
   ctx.fillText("VOLUNTARIADO ZEEK", 0, -cardH / 2 + 118);
 
   // Photo, or initials in the team colour.
-  const photoCy = -cardH / 2 + 150 + 150;
+  const photoCy = -cardH / 2 + 150 + 138;
   const radius = 120;
   ctx.save();
   ctx.beginPath();
