@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ListChecks } from "lucide-react";
+import { FileWarning, ListChecks } from "lucide-react";
 import { BirthdayBanner } from "@/components/ui/birthday-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HeroGradientCard } from "@/components/ui/hero-gradient-card";
@@ -29,6 +29,7 @@ import { dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { isArchivedTask } from "@/server/catalog/archive";
 import { assigneeToken } from "@/server/domain/assignee";
 import { isProject } from "@/server/domain/projects";
+import { getAgreementMeta } from "@/server/services/agreements";
 import { listMyShifts } from "@/server/services/attendance";
 import { weekAgenda, type WeekItem } from "@/server/catalog/week";
 import { listUpcomingBirthdays } from "@/server/services/birthdays";
@@ -49,6 +50,7 @@ export default async function HomePage({
   const filter = one(raw.filtro) ?? "all";
   const today = todayKey();
   const birthdaysToday = await listUpcomingBirthdays(actor, today, 0);
+  const agreementPending = (await getAgreementMeta(actor.userId)) === null;
   const assigneeIds = assigneeKeys(
     actor.volunteerId,
     actor.notionUserId,
@@ -317,7 +319,32 @@ export default async function HomePage({
             )}
           </Panel>
           <Panel title="Avisos">
-            {notices.length === 0 ? (
+            {agreementPending ? (
+              <div
+                role="alert"
+                className="mb-2.5 grid gap-2.5 rounded-[16px] border border-[color-mix(in_srgb,var(--warning)_45%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] p-4"
+              >
+                <p className="flex items-start gap-2.5 text-sm font-semibold">
+                  <FileWarning
+                    size={18}
+                    className="mt-0.5 shrink-0 text-[var(--warning-text)]"
+                    aria-hidden
+                  />
+                  Recuerda firmar y subir tu acuerdo de voluntariado en formato
+                  PDF.
+                </p>
+                <p className="text-muted text-sm">
+                  Si todavía no lo tienes, contacta a tu Head.
+                </p>
+                <Link
+                  href="/perfil#acuerdo"
+                  className="btn btn-primary btn-sm w-fit"
+                >
+                  Subir mi acuerdo
+                </Link>
+              </div>
+            ) : null}
+            {notices.length === 0 && !agreementPending ? (
               <p className="text-muted text-sm">No hay avisos nuevos.</p>
             ) : (
               <ul className="grid gap-2.5">
