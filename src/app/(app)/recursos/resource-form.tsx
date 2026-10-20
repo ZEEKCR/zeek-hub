@@ -51,10 +51,7 @@ export function ResourceForm({
     } catch (error) {
       setState({
         ok: false,
-        message:
-          error instanceof Error && error.message
-            ? error.message
-            : "No se pudo subir el archivo.",
+        message: uploadErrorMessage(error),
       });
     } finally {
       setPending(false);
@@ -142,4 +139,17 @@ export function ResourceForm({
       </div>
     </form>
   );
+}
+
+/**
+ * Vercel Blob answers "Failed to retrieve the client token" when the store is
+ * not connected to the project (no BLOB_READ_WRITE_TOKEN). That is a setup
+ * step, so the message says what to do instead of showing the English error.
+ */
+export function uploadErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : "";
+  if (/client token|BLOB_READ_WRITE_TOKEN|No token found/i.test(message)) {
+    return "La subida de archivos todavía no está activada en el servidor (falta conectar Vercel Blob). Por ahora pega un enlace en «O enlace» y quita el archivo.";
+  }
+  return message || "No se pudo subir el archivo.";
 }
