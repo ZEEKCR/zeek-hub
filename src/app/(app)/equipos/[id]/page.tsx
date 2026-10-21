@@ -1,6 +1,12 @@
 import { ArrowLeft, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CountryFlag } from "@/components/ui/country-flag";
+import {
+  countryName,
+  DEFAULT_COUNTRY,
+  parseCountry,
+} from "@/server/domain/countries";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -60,6 +66,7 @@ export default async function TeamDetailPage({
             {members.map((member) => {
               const email = showContact ? publicEmail(member.email) : undefined;
               const name = member.name;
+              const country = parseCountry(member.country) ?? DEFAULT_COUNTRY;
               return (
                 <article
                   key={member.id}
@@ -74,6 +81,10 @@ export default async function TeamDetailPage({
                     <h3 className="truncate font-semibold">{name}</h3>
                     <p className="text-muted mt-0.5 text-sm">
                       @{member.username} · {roleLabel(member.role)}
+                    </p>
+                    <p className="text-muted mt-0.5 flex items-center gap-1.5 text-sm">
+                      <CountryFlag scope={country} size={12} />
+                      {countryName(country)}
                     </p>
                     {email ? (
                       <p className="text-muted truncate text-sm">{email}</p>
