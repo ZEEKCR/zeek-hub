@@ -36,7 +36,7 @@ import { loadImpact } from "@/server/services/impact";
 import { photoVersions } from "@/server/services/photos";
 import { photoUrl } from "@/server/photos/rules";
 import { PhotoForm } from "@/app/(app)/perfil/photo-form";
-import { BirthdayForm } from "@/app/(app)/perfil/birthday-form";
+import { DetailsForm } from "@/app/(app)/perfil/details-form";
 
 export default async function ProfilePage() {
   const actor = await requireActor();
@@ -93,25 +93,19 @@ export default async function ProfilePage() {
                 </div>
               </div>
             </div>
-            <dl className="border-line mt-5 grid gap-px overflow-hidden rounded-[16px] border sm:grid-cols-2">
-              {[
-                ["Departamento", department?.name],
-                ["País", scopeName(country)],
-                ["Nombre de rol", account?.jobTitle],
-                ["Correo", contactEmail],
-                ["Teléfono", account?.phone],
-              ].map(([label, value]) => (
-                <div key={label} className="bg-surface-2 px-4 py-3">
-                  <dt className="text-muted text-xs font-semibold">{label}</dt>
-                  <dd className="mt-0.5 truncate text-sm font-medium">
-                    {value || "Sin asignar"}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            <p className="text-muted mt-3 text-xs">
-              Un Head actualiza estos datos desde Usuarios.
-            </p>
+            <DetailsForm
+              fixed={[
+                { label: "Departamento", value: department?.name },
+                { label: "País", value: scopeName(country) },
+                {
+                  label: "Nombre de rol",
+                  value: account?.jobTitle ?? undefined,
+                },
+              ]}
+              email={contactEmail ?? ""}
+              phone={account?.phone ?? ""}
+              birthday={birthday}
+            />
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <Link href="/cambiar-contrasena" className="btn btn-primary">
                 Cambiar contraseña
@@ -193,12 +187,6 @@ export default async function ProfilePage() {
                 <ChevronRight size={16} className="text-muted" aria-hidden />
               </Link>
             </div>
-          </Panel>
-          <Panel
-            title="Mi cumpleaños"
-            description="Para que el equipo te felicite."
-          >
-            <BirthdayForm current={birthday} />
           </Panel>
         </div>
       </div>

@@ -22,6 +22,7 @@ export type Action =
   | "agreements.upload"
   | "agreements.manage"
   | "profile.photo"
+  | "profile.contact"
   | "events.rsvp"
   | "events.manage"
   | "reports.create"
@@ -90,6 +91,7 @@ export function authorize(
       return actor.role === "admin";
     case "agreements.upload":
     case "profile.photo":
+    case "profile.contact":
     case "events.rsvp":
     case "birthdays.edit":
     case "reports.create":
@@ -126,6 +128,7 @@ export const POLICY_ACTIONS: Action[] = [
   "agreements.upload",
   "agreements.manage",
   "profile.photo",
+  "profile.contact",
   "events.rsvp",
   "events.manage",
   "reports.create",
