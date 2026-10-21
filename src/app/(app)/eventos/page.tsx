@@ -8,12 +8,21 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { QueryChips } from "@/components/ui/query-chips";
+import { QuerySelect } from "@/components/ui/query-select";
+import { CountryFlag } from "@/components/ui/country-flag";
 import { formatWhen } from "@/lib/dates";
 import { one, searchRecord } from "@/lib/query";
 import { requireActor } from "@/server/auth/request";
 import { loadCatalog } from "@/server/catalog/load";
 import { dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { STAGE_LABEL } from "@/server/catalog/status";
+import {
+  activityScope,
+  countryFilterOptions,
+  DEFAULT_COUNTRY,
+  matchesCountryFilter,
+  resolveCountryFilter,
+} from "@/server/domain/countries";
 import {
   activityKindLabel,
   compareProjects,
@@ -33,7 +42,13 @@ export default async function EventsPage({
   const search = searchRecord(raw);
   const scope = one(raw.alcance) ?? "proximos";
   const today = todayKey();
-  const published = view.publishedActivities();
+  const myCountry = actor.country ?? DEFAULT_COUNTRY;
+  const country = resolveCountryFilter(one(raw.pais), actor.role);
+  const published = view
+    .publishedActivities()
+    .filter((activity) =>
+      matchesCountryFilter(activityScope(activity), country, myCountry),
+    );
   const projectsScope = scope === "proyectos";
   const events = projectsScope
     ? published.filter(isOpenProject).sort(compareProjects)
@@ -93,6 +108,16 @@ export default async function EventsPage({
           { id: "pasados", label: "Pasados" },
         ]}
       />
+      <div className="max-w-xs">
+        <QuerySelect
+          label="País"
+          pathname="/eventos"
+          search={search}
+          param="pais"
+          value={country}
+          options={countryFilterOptions(myCountry)}
+        />
+      </div>
       {next && scope === "proximos" ? (
         <Link href={`/eventos/${next.id}`} className="block">
           <HeroGradientCard kicker="Próximo evento" value={next.title}>
@@ -132,6 +157,7 @@ export default async function EventsPage({
               >
                 {STAGE_LABEL[activity.stage]}
               </span>
+              <CountryFlag scope={activityScope(activity)} size={14} />
               {activity.kind ? (
                 <span className="text-xs font-medium opacity-70">
                   {activityKindLabel(activity.kind)}

@@ -105,6 +105,7 @@ export const notionSchema = {
       volunteers: "Voluntarios",
       coordinator: "Coordinador",
       publish: "Publicar en app",
+      country: "País",
     },
   },
 } as const;

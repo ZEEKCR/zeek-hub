@@ -41,6 +41,7 @@ export const user = pgTable("user", {
   teamId: text("team_id"),
   jobTitle: text("job_title"),
   phone: text("phone"),
+  country: text("country").notNull().default("cr"),
   welcomeSeenAt: timestamp("welcome_seen_at", {
     withTimezone: true,
     mode: "date",

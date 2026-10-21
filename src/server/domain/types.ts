@@ -1,3 +1,5 @@
+import type { CountryId, Scope } from "@/server/domain/countries";
+
 export type Role = "volunteer" | "head" | "admin";
 
 export type VolunteerStatus = "active" | "onboarding" | "inactive";
@@ -74,6 +76,8 @@ export type Activity = {
   timed?: boolean;
   teamIds: string[];
   volunteerIds: string[];
+  /** Where the event happens, or "global". Missing means Notion has no País for it. */
+  country?: Scope;
 };
 
 export type ResourceItem = {
@@ -107,4 +111,6 @@ export type Actor = {
   tempPasswordExpiresAt: string | null;
   /** Null until the person finishes or skips the first-visit welcome. */
   welcomeSeenAt?: string | null;
+  /** Country of the account; Costa Rica for every account created before countries existed. */
+  country?: CountryId;
 };

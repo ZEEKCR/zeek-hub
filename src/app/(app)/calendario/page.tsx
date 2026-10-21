@@ -4,6 +4,15 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { QueryChips } from "@/components/ui/query-chips";
+import { QuerySelect } from "@/components/ui/query-select";
+import {
+  activityScope,
+  countryFilterOptions,
+  DEFAULT_COUNTRY,
+  matchesCountryFilter,
+  resolveCountryFilter,
+  taskScope,
+} from "@/server/domain/countries";
 import {
   clockLabel,
   costaRicaMonthLength,
@@ -51,7 +60,7 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireActor();
+  const actor = await requireActor();
   const catalog = await loadCatalog();
   const catalogView = viewOf(catalog);
   const raw = await searchParams;
@@ -60,9 +69,22 @@ export default async function CalendarPage({
   const month = monthParam(one(raw.mes));
   const today = todayKey();
   const selected = dayParam(one(raw.dia), today);
+  const myCountry = actor.country ?? DEFAULT_COUNTRY;
+  const country = resolveCountryFilter(one(raw.pais), actor.role);
   const events = catalogView
     .publishedActivities()
-    .filter((activity) => activity.start);
+    .filter(
+      (activity) =>
+        activity.start &&
+        matchesCountryFilter(activityScope(activity), country, myCountry),
+    );
+  const visibleTasks = catalog.tasks.filter((task) =>
+    matchesCountryFilter(
+      taskScope(task, catalog.activities),
+      country,
+      myCountry,
+    ),
+  );
   const dated: Item[] = [
     ...events.map((activity) => ({
       id: activity.id,
@@ -72,7 +94,7 @@ export default async function CalendarPage({
       kind: "evento",
       day: dayKey(activity.start ?? today),
     })),
-    ...catalog.tasks.flatMap((task) => {
+    ...visibleTasks.flatMap((task) => {
       if (isArchivedTask(task, catalog.activities)) return [];
       const start = task.dueDate?.start;
       if (!start) return [];
@@ -89,7 +111,7 @@ export default async function CalendarPage({
       ];
     }),
   ];
-  const undated = catalog.tasks.filter(
+  const undated = visibleTasks.filter(
     (task) => !task.dueDate?.start && !isArchivedTask(task, catalog.activities),
   );
   const count = costaRicaMonthLength(month);
@@ -133,6 +155,16 @@ export default async function CalendarPage({
         title="Calendario"
         subtitle="Eventos y fechas de entrega en un solo lugar."
       />
+      <div className="max-w-xs">
+        <QuerySelect
+          label="País"
+          pathname="/calendario"
+          search={search}
+          param="pais"
+          value={country}
+          options={countryFilterOptions(myCountry)}
+        />
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <QueryChips
           label="Vista"

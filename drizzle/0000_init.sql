@@ -213,3 +213,5 @@ CREATE TABLE IF NOT EXISTS "volunteer_agreements" (
   "uploaded_at" timestamptz NOT NULL,
   "uploaded_by" text
 );
+--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "country" text NOT NULL DEFAULT 'cr';

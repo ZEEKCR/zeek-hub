@@ -1,3 +1,5 @@
+import { countryFlag, type CountryId } from "@/server/domain/countries";
+
 /** Words for the share badge and the text that goes with it. Pure, so it can be tested. */
 
 export type BadgeMessageId = "empezando" | "red";
@@ -29,7 +31,7 @@ export function badgeHeadline(id: BadgeMessageId) {
 /** Text to paste next to the image on any network. */
 export function badgeCaption(
   id: BadgeMessageId,
-  details: { team?: string; role?: string },
+  details: { team?: string; role?: string; country?: CountryId },
 ) {
   const where = details.team ? `, en el equipo de ${details.team}` : "";
   const what = details.role ? ` como ${details.role}` : "";
@@ -37,7 +39,8 @@ export function badgeCaption(
     id === "red"
       ? `Soy parte de la red de ZEEK${where}.`
       : `Estoy empezando un rol${what} dentro de ZEEK${where}.`;
-  return `${first} The Future Is Built Together. #ZEEK #Voluntariado`;
+  const flag = details.country ? ` ${countryFlag(details.country)}` : "";
+  return `${first}${flag} The Future Is Built Together. #ZEEK #Voluntariado`;
 }
 
 export type BadgeFormat = "jpg" | "gif";

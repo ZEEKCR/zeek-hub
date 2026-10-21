@@ -1,5 +1,6 @@
 "use client";
 
+import { COUNTRIES, DEFAULT_COUNTRY } from "@/server/domain/countries";
 import { useActionState, useMemo, useState } from "react";
 import { createUserAction } from "@/app/(app)/admin/usuarios/actions";
 import {
@@ -64,6 +65,21 @@ export function CreateUserForm({
         placeholder="Nombre de rol (opcional)"
         className="field"
       />
+      <label htmlFor="country" className="field-label">
+        País
+        <select
+          id="country"
+          name="country"
+          className="field"
+          defaultValue={DEFAULT_COUNTRY}
+        >
+          {COUNTRIES.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+      </label>
       {allowRole ? (
         <>
           <label htmlFor="teamId" className="field-label">

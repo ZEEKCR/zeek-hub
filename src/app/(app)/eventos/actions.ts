@@ -7,10 +7,12 @@ import { requireActor } from "@/server/auth/request";
 import { ACTIVITY_TYPES } from "@/server/catalog/options";
 import { invalidateCatalog, loadCatalog } from "@/server/catalog/load";
 import { canEditActivity, dayKey } from "@/server/catalog/view";
+import { parseScope } from "@/server/domain/countries";
 import type { ActivityStage } from "@/server/domain/types";
 import { updateActivityStage } from "@/server/repositories/notion/repos";
 import {
   createActivityPage,
+  ensureCountryProperty,
   trashNotionPage,
   updateActivityPage,
   type ActivityWrite,
@@ -48,6 +50,8 @@ function readActivity(formData: FormData): ActivityWrite | FormState {
   const type = clean(formData.get("type"));
   const date = clean(formData.get("date"));
   const notes = clean(formData.get("notes"));
+  const countryRaw = clean(formData.get("country"));
+  const country = parseScope(countryRaw);
   if (!title || title.length > 200) {
     return { ok: false, message: "Escribe un título de hasta 200 caracteres." };
   }
@@ -56,6 +60,9 @@ function readActivity(formData: FormData): ActivityWrite | FormState {
   if (!types.has(type)) return { ok: false, message: "El tipo no es válido." };
   if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return { ok: false, message: "La fecha no es válida." };
+  }
+  if (countryRaw && !country) {
+    return { ok: false, message: "El país no es válido." };
   }
   if (notes.length > 2000) {
     return { ok: false, message: "Las notas son demasiado largas." };
@@ -66,7 +73,23 @@ function readActivity(formData: FormData): ActivityWrite | FormState {
     type,
     ...(date ? { date } : {}),
     ...(notes ? { notes } : {}),
+    ...(country ? { country } : {}),
   };
+}
+
+/** Creates the País column in Notion before the first write that uses it. */
+async function prepareCountry(input: ActivityWrite): Promise<FormState> {
+  if (!input.country) return null;
+  try {
+    await ensureCountryProperty();
+  } catch {
+    return {
+      ok: false,
+      message:
+        "No se pudo preparar la columna País en Notion. Crea una columna de tipo Selección llamada País en Activities y comparte la base con la integración.",
+    };
+  }
+  return null;
 }
 
 export async function moveEventStageAction(
@@ -119,6 +142,8 @@ export async function saveActivityAction(
       return { ok: false, message: "No se puede crear la actividad." };
     }
     let created = "";
+    const prepared = await prepareCountry(parsed);
+    if (prepared) return prepared;
     try {
       created = await createActivityPage(parsed);
     } catch {
@@ -142,6 +167,8 @@ export async function saveActivityAction(
     parsed.date &&
     dayKey(activity.start) === parsed.date,
   );
+  const prepared = await prepareCountry(parsed);
+  if (prepared) return prepared;
   try {
     await updateActivityPage(id, parsed, { preserveDate });
   } catch {

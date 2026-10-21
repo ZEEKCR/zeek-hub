@@ -15,6 +15,12 @@ import { requireActor } from "@/server/auth/request";
 import { ensureMigrated, getDb } from "@/server/db/client";
 import { user } from "@/server/db/schema";
 import { isPlaceholderEmail } from "@/server/auth/credentials";
+import { CountryFlag } from "@/components/ui/country-flag";
+import {
+  DEFAULT_COUNTRY,
+  countryName,
+  parseCountry,
+} from "@/server/domain/countries";
 import { roleLabel } from "@/server/domain/roles";
 import { photoUrl } from "@/server/photos/rules";
 import { photoVersions } from "@/server/services/photos";
@@ -71,6 +77,15 @@ export default async function AdminUsersPage() {
                       {department ? (
                         <span className="badge">{department.name}</span>
                       ) : null}
+                      <span className="badge gap-1.5">
+                        <CountryFlag
+                          scope={parseCountry(item.country) ?? DEFAULT_COUNTRY}
+                          size={12}
+                        />
+                        {countryName(
+                          parseCountry(item.country) ?? DEFAULT_COUNTRY,
+                        )}
+                      </span>
                       {item.banned ? (
                         <span className="badge badge-danger">Inactivo</span>
                       ) : null}
@@ -105,6 +120,7 @@ export default async function AdminUsersPage() {
                         userId={item.id}
                         teams={teams}
                         teamId={item.teamId ?? ""}
+                        country={parseCountry(item.country) ?? DEFAULT_COUNTRY}
                         jobTitle={item.jobTitle ?? ""}
                         email={isPlaceholderEmail(item.email) ? "" : item.email}
                         phone={item.phone ?? ""}

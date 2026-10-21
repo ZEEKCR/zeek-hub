@@ -8,6 +8,11 @@ import {
   type FormState,
 } from "@/app/(app)/eventos/actions";
 import { ACTIVITY_TYPES } from "@/server/catalog/options";
+import {
+  COUNTRIES,
+  DEFAULT_SCOPE,
+  type Scope,
+} from "@/server/domain/countries";
 import { STAGE_LABEL, STAGE_ORDER } from "@/server/catalog/status";
 import type { ActivityStage } from "@/server/domain/types";
 
@@ -26,6 +31,7 @@ export function ActivityEditor({
     type: string;
     date?: string;
     notes?: string;
+    country?: Scope;
   };
   locked: boolean;
 }) {
@@ -99,7 +105,23 @@ export function ActivityEditor({
               ))}
             </select>
           </label>
-          <label className="field-label sm:col-span-2">
+          <label className="field-label">
+            País
+            <select
+              name="country"
+              defaultValue={activity?.country ?? DEFAULT_SCOPE}
+              disabled={locked}
+              className={field}
+            >
+              <option value="global">Global</option>
+              {COUNTRIES.map((country) => (
+                <option key={country.id} value={country.id}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field-label">
             Fecha
             <input
               name="date"

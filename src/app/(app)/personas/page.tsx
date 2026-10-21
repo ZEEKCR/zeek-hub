@@ -9,6 +9,12 @@ import { teamTone } from "@/lib/team-colors";
 import { publicEmail } from "@/server/auth/credentials";
 import { requireActor } from "@/server/auth/request";
 import { canSeeContact } from "@/server/catalog/view";
+import { CountryFlag } from "@/components/ui/country-flag";
+import {
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  parseCountry,
+} from "@/server/domain/countries";
 import { foldName } from "@/server/domain/assignee";
 import { roleLabel } from "@/server/domain/roles";
 import { photoUrl } from "@/server/photos/rules";
@@ -25,6 +31,7 @@ export default async function PeoplePage({
   const raw = await searchParams;
   const search = searchRecord(raw);
   const team = one(raw.equipo) ?? "all";
+  const country = one(raw.pais) ?? "all";
   const query = foldName(one(raw.q) ?? "");
   const [accounts, versions] = await Promise.all([
     listTeamAccounts(),
@@ -33,6 +40,8 @@ export default async function PeoplePage({
   const teamName = new Map(INITIAL_TEAMS.map((item) => [item.id, item.name]));
   const people = accounts.filter((account) => {
     if (team !== "all" && account.teamId !== team) return false;
+    if (country !== "all" && parseCountry(account.country) !== country)
+      return false;
     if (!query) return true;
     return foldName(
       `${account.name} ${account.jobTitle ?? ""} ${teamName.get(account.teamId ?? "") ?? ""}`,
@@ -67,6 +76,17 @@ export default async function PeoplePage({
         ) : null}
       </form>
       <QueryChips
+        label="País"
+        pathname="/personas"
+        search={search}
+        param="pais"
+        value={country}
+        options={[
+          { id: "all", label: "Todos" },
+          ...COUNTRIES.map((item) => ({ id: item.id, label: item.name })),
+        ]}
+      />
+      <QueryChips
         label="Equipo"
         pathname="/personas"
         search={search}
@@ -100,6 +120,12 @@ export default async function PeoplePage({
                 </div>
               </div>
               <p className="flex flex-wrap gap-1.5">
+                <span className="badge inline-flex items-center gap-1.5">
+                  <CountryFlag
+                    scope={parseCountry(person.country) ?? DEFAULT_COUNTRY}
+                    size={14}
+                  />
+                </span>
                 {person.teamId ? (
                   <Link
                     href={`/equipos/${person.teamId}`}

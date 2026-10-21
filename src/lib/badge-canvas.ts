@@ -1,4 +1,6 @@
+import { drawFlag } from "@/lib/flags";
 import { initials } from "@/lib/utils";
+import { countryName, type CountryId } from "@/server/domain/countries";
 
 export const BADGE_WIDTH = 1080;
 export const BADGE_HEIGHT = 1350;
@@ -12,6 +14,7 @@ export type BadgeData = {
   teamColor?: string;
   photoUrl?: string;
   since?: string;
+  country?: CountryId;
 };
 
 function loadImage(src: string) {
@@ -244,10 +247,26 @@ export function drawBadge(
     ctx.fillText(data.team, 0, pillBottom + 66);
     pillBottom += 84;
   }
-  if (data.since) {
+  if (data.since || data.country) {
+    const label = [
+      data.country ? countryName(data.country) : "",
+      data.since ? `Desde ${data.since}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
     ctx.fillStyle = "#8a8a96";
     ctx.font = `500 26px ${family}`;
-    ctx.fillText(`Desde ${data.since}`, 0, pillBottom + 56);
+    const flagW = data.country ? 39 : 0;
+    const gap = data.country ? 14 : 0;
+    const textW = ctx.measureText(label).width;
+    const left = -(flagW + gap + textW) / 2;
+    const baseline = pillBottom + 56;
+    if (data.country) {
+      drawFlag(ctx, data.country, left, baseline - 22, flagW, 26, 4);
+    }
+    ctx.textAlign = "left";
+    ctx.fillText(label, left + flagW + gap, baseline);
+    ctx.textAlign = "center";
   }
 
   // A band of light that sweeps across the card once per loop.
