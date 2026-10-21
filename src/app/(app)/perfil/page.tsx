@@ -121,26 +121,6 @@ export default async function ProfilePage() {
             <AgreementPanel userId={actor.userId} agreement={agreement} />
           ) : null}
           <ImpactPanel impact={impact} />
-          <div id="gafete" className="scroll-mt-6">
-            <Panel
-              title="Mi gafete de ZEEK"
-              description="Una imagen para compartir en tus redes."
-            >
-              <ShareBadge
-                name={displayName}
-                role={account?.jobTitle || roleLabel(actor.role)}
-                team={department?.name}
-                teamColor={teamTone(account?.teamId)?.solid}
-                photoUrl={photoUrl(actor.userId, versions)}
-                country={country}
-                since={
-                  impact.since
-                    ? formatCostaRica(impact.since, "MMMM 'de' yyyy")
-                    : undefined
-                }
-              />
-            </Panel>
-          </div>
         </div>
         <div className="grid gap-6">
           <Panel
@@ -188,6 +168,26 @@ export default async function ProfilePage() {
               </Link>
             </div>
           </Panel>
+          <div id="gafete" className="scroll-mt-6">
+            <Panel
+              title="Mi gafete de ZEEK"
+              description="Una imagen para compartir en tus redes."
+            >
+              <ShareBadge
+                name={displayName}
+                role={account?.jobTitle || roleLabel(actor.role)}
+                team={department?.name}
+                teamColor={teamTone(account?.teamId)?.solid}
+                photoUrl={photoUrl(actor.userId, versions)}
+                country={country}
+                since={
+                  impact.since
+                    ? formatCostaRica(impact.since, "MMMM 'de' yyyy")
+                    : undefined
+                }
+              />
+            </Panel>
+          </div>
         </div>
       </div>
     </div>
