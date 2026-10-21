@@ -3,36 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireActor } from "@/server/auth/request";
 import { setOwnBirthday } from "@/server/services/birthdays";
+import { updateOwnContact } from "@/server/services/users";
 import { removeOwnPhoto, setOwnPhoto } from "@/server/services/photos";
-
-export type BirthdayFormState =
-  { ok: true; message: string } | { ok: false; message: string } | null;
-
-export async function saveBirthdayAction(
-  _state: BirthdayFormState,
-  formData: FormData,
-): Promise<BirthdayFormState> {
-  const actor = await requireActor();
-  const remove = formData.get("remove") === "1";
-  const result = await setOwnBirthday(
-    actor,
-    remove
-      ? null
-      : {
-          month: Number(formData.get("month")),
-          day: Number(formData.get("day")),
-        },
-  );
-  if (!result.ok) return { ok: false, message: result.error.message };
-  revalidatePath("/perfil");
-  revalidatePath("/inicio");
-  return {
-    ok: true,
-    message: result.data
-      ? "Listo, tu cumpleaños quedó guardado."
-      : "Quitamos tu cumpleaños.",
-  };
-}
 
 export type PhotoFormState =
   { ok: true; message: string } | { ok: false; message: string } | null;
@@ -59,4 +31,32 @@ export async function savePhotoAction(
   if (!result.ok) return { ok: false, message: result.error.message };
   revalidatePath("/", "layout");
   return { ok: true, message: "Listo, ya se ve tu foto." };
+}
+
+export type DetailsFormState =
+  { ok: true; message: string } | { ok: false; message: string } | null;
+
+/** Email, phone and birthday, saved together from the profile grid. */
+export async function saveDetailsAction(
+  _state: DetailsFormState,
+  formData: FormData,
+): Promise<DetailsFormState> {
+  const actor = await requireActor();
+  const contact = await updateOwnContact(actor, {
+    email: String(formData.get("email") ?? ""),
+    phone: String(formData.get("phone") ?? ""),
+  });
+  if (!contact.ok) return { ok: false, message: contact.error.message };
+  const month = String(formData.get("month") ?? "").trim();
+  const day = String(formData.get("day") ?? "").trim();
+  const birthday = await setOwnBirthday(
+    actor,
+    month || day ? { month: Number(month), day: Number(day) } : null,
+  );
+  if (!birthday.ok) return { ok: false, message: birthday.error.message };
+  revalidatePath("/perfil");
+  revalidatePath("/inicio");
+  revalidatePath("/personas");
+  revalidatePath("/equipos");
+  return { ok: true, message: "Listo, guardamos tus datos." };
 }

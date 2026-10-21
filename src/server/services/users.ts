@@ -655,6 +655,78 @@ export async function updateAccountProfile(
   return ok({ username: target.username });
 }
 
+/** A person edits their own email and phone; everything else stays with the Heads. */
+export async function updateOwnContact(
+  actor: Actor,
+  input: { email: string; phone: string },
+): Promise<Result<{ email: string; phone: string }>> {
+  if (!authorize(actor, "profile.contact")) {
+    return err("forbidden", "No tiene permiso para editar este perfil.");
+  }
+  const email = input.email.trim().toLowerCase();
+  const phone = input.phone.trim();
+  if (email && (!EMAIL_PATTERN.test(email) || email.length > 120)) {
+    return err("validation", "El correo no es válido.");
+  }
+  if (phone && !PHONE_PATTERN.test(phone)) {
+    return err("validation", "El teléfono no es válido.");
+  }
+  const rows = await getDb()
+    .select()
+    .from(user)
+    .where(eq(user.id, actor.userId));
+  const row = rows[0];
+  if (!row) return err("not_found", "Usuario no encontrado.");
+  const nextEmail = email || placeholderEmail(row.username ?? actor.username);
+  if (nextEmail !== row.email) {
+    const taken = await getDb()
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.email, nextEmail))
+      .limit(1);
+    if (taken[0] && taken[0].id !== actor.userId) {
+      return err("conflict", "Ese correo ya está en uso.");
+    }
+  }
+  await getDb()
+    .update(user)
+    .set({ email: nextEmail, phone: phone || null, updatedAt: new Date() })
+    .where(eq(user.id, actor.userId));
+  if (actor.volunteerId) {
+    try {
+      const repos = repositories();
+      const volunteer = await repos.volunteers.get(actor.volunteerId);
+      if (volunteer) {
+        const contact = publicEmail(nextEmail);
+        const next: Volunteer = {
+          ...volunteer,
+          updatedAt: new Date().toISOString(),
+        };
+        if (contact) next.email = contact;
+        else delete next.email;
+        if (phone) next.phone = phone;
+        else delete next.phone;
+        await repos.volunteers.upsert(next);
+      }
+    } catch {
+      // The account is the source of truth for the profile; Notion catches up later.
+    }
+  }
+  await writeAudit({
+    actorType: "user",
+    actorId: actor.userId,
+    action: "user.edit_own_contact",
+    entity: "user",
+    entityId: actor.userId,
+    before: {
+      hasEmail: !isPlaceholderEmail(row.email),
+      hasPhone: Boolean(row.phone),
+    },
+    after: { hasEmail: Boolean(email), hasPhone: Boolean(phone) },
+  });
+  return ok({ email, phone });
+}
+
 export async function renameAccount(
   actor: Actor,
   userId: string,

@@ -9,6 +9,7 @@ import {
   buildActor,
   provisionUser,
   updateAccountProfile,
+  updateOwnContact,
 } from "@/server/services/users";
 
 function actor(role: Role, userId: string): Actor {
@@ -132,5 +133,52 @@ describe("account profile", () => {
         })
       ).ok,
     ).toBe(false);
+  });
+});
+
+describe("own contact", () => {
+  beforeEach(async () => {
+    resetMemoryStore();
+    await ensureMigrated();
+    await getDb().delete(user);
+  });
+
+  it("lets a volunteer change and clear their own email and phone", async () => {
+    const id = await create("lola");
+    const me = actor("volunteer", id);
+    const saved = await updateOwnContact(me, {
+      email: " Lola@Example.com ",
+      phone: "+506 7000 0000",
+    });
+    expect(saved.ok).toBe(true);
+    const [row] = await getDb().select().from(user).where(eq(user.id, id));
+    expect(row?.email).toBe("lola@example.com");
+    expect(row?.phone).toBe("+506 7000 0000");
+    const cleared = await updateOwnContact(me, { email: "", phone: "" });
+    expect(cleared.ok).toBe(true);
+    const [after] = await getDb().select().from(user).where(eq(user.id, id));
+    expect(after?.email.endsWith("@users.invalid")).toBe(true);
+    expect(after?.phone).toBeNull();
+  });
+
+  it("rejects bad values and an email another person uses", async () => {
+    const first = await create("uno");
+    const second = await create("dos");
+    const me = actor("volunteer", second);
+    expect((await updateOwnContact(me, { email: "x", phone: "" })).ok).toBe(
+      false,
+    );
+    expect((await updateOwnContact(me, { email: "", phone: "abc" })).ok).toBe(
+      false,
+    );
+    await updateOwnContact(actor("volunteer", first), {
+      email: "uno@example.com",
+      phone: "",
+    });
+    const clash = await updateOwnContact(me, {
+      email: "uno@example.com",
+      phone: "",
+    });
+    expect(clash.ok).toBe(false);
   });
 });
