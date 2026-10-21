@@ -21,6 +21,7 @@ import {
   type BadgeMessageId,
 } from "@/lib/badge";
 import { prefersReducedMotion } from "@/lib/motion";
+import type { CountryId } from "@/server/domain/countries";
 
 export type ShareBadgeProps = {
   name: string;
@@ -29,6 +30,7 @@ export type ShareBadgeProps = {
   teamColor?: string | undefined;
   photoUrl?: string | undefined;
   since?: string | undefined;
+  country?: CountryId | undefined;
 };
 
 const LOOP_MS = 2000;
@@ -44,7 +46,7 @@ export function ShareBadge(props: ShareBadgeProps) {
   const [problem, setProblem] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
-  const { name, role, team, teamColor, photoUrl, since } = props;
+  const { name, role, team, teamColor, photoUrl, since, country } = props;
   // The pictures of the current photo; until they arrive the buttons wait.
   const assets =
     loaded && loaded.key === (photoUrl ?? "") ? loaded.assets : null;
@@ -57,6 +59,7 @@ export function ShareBadge(props: ShareBadgeProps) {
     ...(teamColor ? { teamColor } : {}),
     ...(photoUrl ? { photoUrl } : {}),
     ...(since ? { since } : {}),
+    ...(country ? { country } : {}),
   };
 
   // Fonts and pictures load once per photo.
@@ -93,6 +96,7 @@ export function ShareBadge(props: ShareBadgeProps) {
       ...(team ? { team } : {}),
       ...(teamColor ? { teamColor } : {}),
       ...(since ? { since } : {}),
+      ...(country ? { country } : {}),
     };
     const preview = 0.3;
     if (format === "jpg" || prefersReducedMotion()) {
@@ -110,9 +114,13 @@ export function ShareBadge(props: ShareBadgeProps) {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [assets, format, headline, name, role, team, teamColor, since]);
+  }, [assets, format, headline, name, role, team, teamColor, since, country]);
 
-  const caption = badgeCaption(message, { ...(team ? { team } : {}), role });
+  const caption = badgeCaption(message, {
+    ...(team ? { team } : {}),
+    ...(country ? { country } : {}),
+    role,
+  });
 
   async function makeFile() {
     if (!assets) throw new Error("assets");

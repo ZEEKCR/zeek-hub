@@ -1,4 +1,10 @@
 import Link from "next/link";
+import {
+  activityScope,
+  DEFAULT_COUNTRY,
+  matchesCountryFilter,
+  resolveCountryFilter,
+} from "@/server/domain/countries";
 import { FileWarning, ListChecks } from "lucide-react";
 import { BirthdayBanner } from "@/components/ui/birthday-card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -114,10 +120,16 @@ export default async function HomePage({
   const doneWeek = doneMonth.filter(
     (task) => dayKey(task.updatedAt) >= weekStart,
   ).length;
+  const countryFilter = resolveCountryFilter(undefined, actor.role);
   const upcoming = view
     .publishedActivities()
     .filter(
       (activity) =>
+        matchesCountryFilter(
+          activityScope(activity),
+          countryFilter,
+          actor.country ?? DEFAULT_COUNTRY,
+        ) &&
         !isProject(activity) &&
         activity.start &&
         dayKey(activity.start) >= today,

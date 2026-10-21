@@ -1,5 +1,6 @@
 "use server";
 
+import { DEFAULT_COUNTRY, parseCountry } from "@/server/domain/countries";
 import { revalidatePath } from "next/cache";
 import { requireActor } from "@/server/auth/request";
 import {
@@ -50,6 +51,8 @@ export async function createUserAction(
     ...(String(formData.get("jobTitle") ?? "").trim()
       ? { jobTitle: String(formData.get("jobTitle")) }
       : {}),
+    country:
+      parseCountry(String(formData.get("country") ?? "")) ?? DEFAULT_COUNTRY,
   });
   if (!result.ok) return result;
   revalidatePath("/admin/usuarios");
@@ -89,6 +92,7 @@ export async function updateProfileAction(
     String(formData.get("userId") ?? ""),
     {
       teamId: String(formData.get("teamId") ?? ""),
+      country: String(formData.get("country") ?? ""),
       jobTitle: String(formData.get("jobTitle") ?? ""),
       email: String(formData.get("email") ?? ""),
       phone: String(formData.get("phone") ?? ""),

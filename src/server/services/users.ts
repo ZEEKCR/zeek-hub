@@ -26,6 +26,11 @@ import {
   validatePassword,
 } from "@/server/auth/password-policy";
 import { authorize } from "@/server/auth/policy";
+import {
+  DEFAULT_COUNTRY,
+  parseCountry,
+  type CountryId,
+} from "@/server/domain/countries";
 import { err, ok, type Result } from "@/server/domain/result";
 import { LIMITS, consumeLimit } from "@/server/ratelimit/limiter";
 import { repositories } from "@/server/container";
@@ -106,6 +111,7 @@ export async function buildActor(userId: string): Promise<Actor | null> {
     privacyAcceptedAt: row.privacyAcceptedAt?.toISOString() ?? null,
     tempPasswordExpiresAt: row.tempPasswordExpiresAt?.toISOString() ?? null,
     welcomeSeenAt: row.welcomeSeenAt?.toISOString() ?? null,
+    country: parseCountry(row.country) ?? DEFAULT_COUNTRY,
   };
 }
 
@@ -282,6 +288,7 @@ export type ProvisionInput = {
   email?: string;
   phone?: string;
   jobTitle?: string;
+  country?: CountryId;
   createdBy: string | null;
   makeHead?: boolean;
 };
@@ -347,6 +354,7 @@ export async function provisionUser(
         teamId: input.primaryTeamId,
         jobTitle: input.jobTitle?.trim() || null,
         phone: input.phone?.trim() || null,
+        country: input.country ?? DEFAULT_COUNTRY,
         createdBy: input.createdBy,
         createdAt: now,
         updatedAt: now,
@@ -533,6 +541,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type ProfileInput = {
   teamId: string;
+  country?: string;
   jobTitle: string;
   email: string;
   phone: string;
@@ -563,6 +572,11 @@ export async function updateAccountProfile(
   if (jobTitle.length > 60) {
     return err("validation", "El nombre de rol admite hasta 60 caracteres.");
   }
+  const country =
+    input.country === undefined ? undefined : parseCountry(input.country);
+  if (country === null) {
+    return err("validation", "El país no es válido.");
+  }
   if (email && (!EMAIL_PATTERN.test(email) || email.length > 120)) {
     return err("validation", "El correo no es válido.");
   }
@@ -587,6 +601,7 @@ export async function updateAccountProfile(
     .update(user)
     .set({
       teamId: input.teamId,
+      ...(country ? { country } : {}),
       jobTitle: jobTitle || null,
       email: nextEmail,
       phone: phone || null,
@@ -1013,6 +1028,7 @@ export async function listTeamAccounts() {
       teamId: user.teamId,
       jobTitle: user.jobTitle,
       phone: user.phone,
+      country: user.country,
       banned: user.banned,
     })
     .from(user);

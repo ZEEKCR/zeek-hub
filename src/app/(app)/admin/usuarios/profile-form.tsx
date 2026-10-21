@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { COUNTRIES } from "@/server/domain/countries";
 import { updateProfileAction } from "@/app/(app)/admin/usuarios/actions";
 
 const field = "field h-10 min-h-10 min-w-0 text-sm";
@@ -9,6 +10,7 @@ export function ProfileForm({
   userId,
   teams,
   teamId,
+  country,
   jobTitle,
   email,
   phone,
@@ -16,6 +18,7 @@ export function ProfileForm({
   userId: string;
   teams: { id: string; name: string }[];
   teamId: string;
+  country: string;
   jobTitle: string;
   email: string;
   phone: string;
@@ -31,6 +34,16 @@ export function ProfileForm({
           {teams.map((team) => (
             <option key={team.id} value={team.id}>
               {team.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="field-label">
+        País
+        <select name="country" defaultValue={country} className={field}>
+          {COUNTRIES.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
             </option>
           ))}
         </select>

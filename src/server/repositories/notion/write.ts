@@ -1,4 +1,5 @@
 import { foldName } from "@/server/domain/assignee";
+import { NOTION_SCOPE_OPTIONS, type Scope } from "@/server/domain/countries";
 import type {
   ActivityStage,
   Priority,
@@ -32,6 +33,8 @@ export type ActivityWrite = {
   type: string;
   date?: string;
   notes?: string;
+  /** País option; undefined leaves the column untouched. */
+  country?: Scope;
 };
 
 function titleProperty(content: string) {
@@ -87,6 +90,12 @@ export function activityProperties(
     [names.notes]: richText(input.notes ?? ""),
   };
   if (options?.preserveDate) delete properties[names.date];
+  if (input.country) {
+    const option = NOTION_SCOPE_OPTIONS.find(
+      (item) => item.scope === input.country,
+    );
+    if (option) properties[names.country] = { select: { name: option.name } };
+  }
   return properties;
 }
 
@@ -193,6 +202,48 @@ export async function ensureAssigneeOption(name: string) {
     client.dataSources.update({
       data_source_id: dataSourceIdValue,
       properties: { [propertyName]: { [kind]: { options } } } as never,
+    }),
+  );
+}
+
+/**
+ * Makes sure Activities has a País select with Global and the four countries,
+ * creating the column or adding missing options. Existing options are kept.
+ */
+export async function ensureCountryProperty() {
+  const { client, call } = createNotionClient();
+  const dataSourceIdValue = dataSourceId("activities");
+  const propertyName = notionSchema.activities.properties.country;
+  const source = (await call(() =>
+    client.dataSources.retrieve({ data_source_id: dataSourceIdValue }),
+  )) as unknown as {
+    properties?: Record<
+      string,
+      { type?: string; select?: { options?: SelectOption[] } }
+    >;
+  };
+  const property = source.properties?.[propertyName];
+  if (property && property.type !== "select") {
+    throw new Error(`La columna ${propertyName} no es de tipo Selección.`);
+  }
+  const existing = property?.select?.options ?? [];
+  const missing = NOTION_SCOPE_OPTIONS.filter(
+    (item) =>
+      !existing.some((option) => foldName(option.name) === foldName(item.name)),
+  );
+  if (property && missing.length === 0) return;
+  const options = [
+    ...existing.map((option) => ({
+      ...(option.id ? { id: option.id } : {}),
+      name: option.name,
+      ...(option.color ? { color: option.color } : {}),
+    })),
+    ...missing.map((item) => ({ name: item.name })),
+  ];
+  await call(() =>
+    client.dataSources.update({
+      data_source_id: dataSourceIdValue,
+      properties: { [propertyName]: { select: { options } } } as never,
     }),
   );
 }

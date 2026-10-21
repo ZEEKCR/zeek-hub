@@ -12,6 +12,7 @@ import type {
   VolunteerStatus,
 } from "@/server/domain/types";
 import { assigneeToken } from "@/server/domain/assignee";
+import { parseScope } from "@/server/domain/countries";
 import { notionSchema } from "@/server/repositories/notion/schema";
 
 const volunteerSchema = z.object({
@@ -394,6 +395,8 @@ export function mapActivityPage(page: {
   if (place) activity.place = place;
   if (format) activity.format = format;
   if (link) activity.link = link;
+  const country = parseScope(properties[names.country]?.select?.name);
+  if (country) activity.country = country;
   const notes = textOf(properties[names.notes]);
   if (notes) activity.notes = notes;
   return { activity, people: owners };

@@ -10,6 +10,13 @@ import { assigneeKeys, isPastDue } from "@/server/catalog/focus";
 import { loadCatalog } from "@/server/catalog/load";
 import { canMoveTask, dayKey, todayKey, viewOf } from "@/server/catalog/view";
 import { isArchivedTask } from "@/server/catalog/archive";
+import {
+  countryFilterOptions,
+  DEFAULT_COUNTRY,
+  matchesCountryFilter,
+  resolveCountryFilter,
+  taskScope,
+} from "@/server/domain/countries";
 
 export default async function TasksPage({
   searchParams,
@@ -30,6 +37,8 @@ export default async function TasksPage({
   const myTeams = [actor.teamId, ...actor.teamIds].filter((id): id is string =>
     Boolean(id),
   );
+  const myCountry = actor.country ?? DEFAULT_COUNTRY;
+  const country = resolveCountryFilter(one(raw.pais), actor.role);
   const showOverdue = one(raw.vencidas) === "1";
   const today = todayKey();
   const mineKeys = assigneeKeys(
@@ -40,6 +49,14 @@ export default async function TasksPage({
   const filtered = catalog.tasks.filter((task) => {
     if (isArchivedTask(task, catalog.activities)) return false;
     if (!showOverdue && isPastDue(task, today)) return false;
+    if (
+      !matchesCountryFilter(
+        taskScope(task, catalog.activities),
+        country,
+        myCountry,
+      )
+    )
+      return false;
     if (team !== "all" && !task.teamIds.includes(team)) return false;
     if (
       person !== "all" &&
@@ -68,7 +85,15 @@ export default async function TasksPage({
           ) : null
         }
       />
-      <div className="panel-flat grid gap-3 p-3 sm:grid-cols-2 sm:p-4 xl:grid-cols-5">
+      <div className="panel-flat grid gap-3 p-3 sm:grid-cols-2 sm:p-4 xl:grid-cols-6">
+        <QuerySelect
+          label="País"
+          pathname="/tareas"
+          search={search}
+          param="pais"
+          value={country}
+          options={countryFilterOptions(myCountry)}
+        />
         <QuerySelect
           label="Equipo"
           pathname="/tareas"
@@ -136,7 +161,7 @@ export default async function TasksPage({
         />
       </div>
       <KanbanBoard
-        key={`${team}:${person}:${event}:${scope ?? "0"}:${showOverdue ? "1" : "0"}`}
+        key={`${country}:${team}:${person}:${event}:${scope ?? "0"}:${showOverdue ? "1" : "0"}`}
         tasks={filtered.map((task) => {
           const due = task.dueDate?.start;
           const dueDay = due ? dayKey(due) : "";

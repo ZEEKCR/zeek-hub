@@ -10,6 +10,8 @@ import {
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
+import { ScopeBadge } from "@/components/ui/country-flag";
+import { activityScope } from "@/server/domain/countries";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { KpiStat } from "@/components/ui/kpi-stat";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -71,6 +73,7 @@ export default async function EventDetailPage({
           {activity.kind ? (
             <span className="badge">{activityKindLabel(activity.kind)}</span>
           ) : null}
+          <ScopeBadge scope={activityScope(activity)} />
         </div>
         <h1 className="text-3xl leading-tight font-semibold tracking-tight md:text-5xl">
           {activity.title}
@@ -278,6 +281,7 @@ export default async function EventDetailPage({
             type: activity.kind,
             ...(activity.start ? { date: dayKey(activity.start) } : {}),
             ...(activity.notes ? { notes: activity.notes } : {}),
+            country: activityScope(activity),
           }}
         />
       </div>

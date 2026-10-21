@@ -28,6 +28,7 @@ import { AgreementPanel } from "@/components/agreements/agreement-panel";
 import { requiresAgreement } from "@/server/agreements/rules";
 import { getAgreementMeta } from "@/server/services/agreements";
 import { formatCostaRica } from "@/lib/dates";
+import { DEFAULT_COUNTRY, scopeName } from "@/server/domain/countries";
 import { ShareBadge } from "@/components/share/share-badge";
 import { teamTone } from "@/lib/team-colors";
 import { ImpactPanel } from "@/components/ui/impact-panel";
@@ -39,6 +40,7 @@ import { BirthdayForm } from "@/app/(app)/perfil/birthday-form";
 
 export default async function ProfilePage() {
   const actor = await requireActor();
+  const country = actor.country ?? DEFAULT_COUNTRY;
   await ensureMigrated();
   const [account] = await getDb()
     .select()
@@ -94,6 +96,7 @@ export default async function ProfilePage() {
             <dl className="border-line mt-5 grid gap-px overflow-hidden rounded-[16px] border sm:grid-cols-2">
               {[
                 ["Departamento", department?.name],
+                ["País", scopeName(country)],
                 ["Nombre de rol", account?.jobTitle],
                 ["Correo", contactEmail],
                 ["Teléfono", account?.phone],
@@ -135,6 +138,7 @@ export default async function ProfilePage() {
                 team={department?.name}
                 teamColor={teamTone(account?.teamId)?.solid}
                 photoUrl={photoUrl(actor.userId, versions)}
+                country={country}
                 since={
                   impact.since
                     ? formatCostaRica(impact.since, "MMMM 'de' yyyy")
