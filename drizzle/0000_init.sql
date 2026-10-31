@@ -215,3 +215,21 @@ CREATE TABLE IF NOT EXISTS "volunteer_agreements" (
 );
 --> statement-breakpoint
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "country" text NOT NULL DEFAULT 'cr';
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "event_suggestions" (
+  "id" text PRIMARY KEY,
+  "created_at" timestamptz NOT NULL,
+  "user_id" text NOT NULL,
+  "suggester_name" text NOT NULL,
+  "kind" text NOT NULL,
+  "title" text NOT NULL,
+  "description" text NOT NULL,
+  "contact_name" text,
+  "contact_info" text,
+  "country" text NOT NULL DEFAULT 'cr',
+  "status" text NOT NULL DEFAULT 'new',
+  "reviewed_at" timestamptz,
+  "reviewed_by" text
+);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "event_suggestions_user_idx" ON "event_suggestions" ("user_id");
