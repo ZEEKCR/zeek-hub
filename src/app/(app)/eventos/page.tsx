@@ -1,4 +1,4 @@
-import { CalendarDays, MapPin, Plus } from "lucide-react";
+import { CalendarDays, Lightbulb, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -88,12 +88,21 @@ export default async function EventsPage({
               : "Lo que viene, con su avance y su equipo."
         }
         actions={
-          actor.role === "admin" ? (
-            <Link href="/eventos/nuevo" className="btn btn-primary">
-              <Plus size={18} aria-hidden />
-              Nueva actividad
+          <>
+            <Link
+              href="/eventos/sugerir"
+              className={`btn ${actor.role === "admin" ? "btn-secondary" : "btn-primary"}`}
+            >
+              <Lightbulb size={18} aria-hidden />
+              Sugerir evento
             </Link>
-          ) : null
+            {actor.role === "admin" ? (
+              <Link href="/eventos/nuevo" className="btn btn-primary">
+                <Plus size={18} aria-hidden />
+                Nueva actividad
+              </Link>
+            ) : null}
+          </>
         }
       />
       <QueryChips

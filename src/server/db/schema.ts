@@ -193,6 +193,25 @@ export const reports = pgTable("reports", {
   resolvedBy: text("resolved_by"),
 });
 
+export const eventSuggestions = pgTable("event_suggestions", {
+  id: text("id").primaryKey(),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+  userId: text("user_id").notNull(),
+  suggesterName: text("suggester_name").notNull(),
+  kind: text("kind").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  contactName: text("contact_name"),
+  contactInfo: text("contact_info"),
+  country: text("country").notNull().default("cr"),
+  status: text("status").notNull().default("new"),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true, mode: "date" }),
+  reviewedBy: text("reviewed_by"),
+});
+
 export const eventRsvps = pgTable(
   "event_rsvps",
   {

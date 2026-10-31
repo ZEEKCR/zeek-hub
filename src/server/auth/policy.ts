@@ -27,6 +27,8 @@ export type Action =
   | "events.manage"
   | "reports.create"
   | "reports.manage"
+  | "suggestions.create"
+  | "suggestions.manage"
   | "admin.sync"
   | "admin.audit"
   | "admin.tokens";
@@ -95,8 +97,10 @@ export function authorize(
     case "events.rsvp":
     case "birthdays.edit":
     case "reports.create":
+    case "suggestions.create":
       return true;
     case "reports.manage":
+    case "suggestions.manage":
       return actor.role === "admin";
     case "events.manage":
       return isLead(actor);
@@ -133,6 +137,8 @@ export const POLICY_ACTIONS: Action[] = [
   "events.manage",
   "reports.create",
   "reports.manage",
+  "suggestions.create",
+  "suggestions.manage",
   "admin.sync",
   "admin.audit",
   "admin.tokens",
