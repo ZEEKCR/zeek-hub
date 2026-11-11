@@ -24,7 +24,7 @@
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
     "@node-rs/argon2": "^2.2.2",
-    "@notionhq/client": "^5.27.0",
+    "@notionhq/client": "^5.27.1",
     "@sentry/nextjs": "^11.7.0",
     "@upstash/ratelimit": "^2.2.0",
     "@upstash/redis": "^1.39.0",
